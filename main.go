@@ -1,10 +1,10 @@
 package main
 
 import (
-	"log"
 	"os"
 
 	"github.com/urfave/cli/v2"
+	"github.com/polynetwork/bridge-common/log"
 )
 
 func main() {
@@ -33,6 +33,7 @@ func start(ctx *cli.Context) (err error) {
 }
 
 func Init(ctx *cli.Context) (err error) {
+	log.Init(nil)
 	err = NewConfig(ctx.String("config"))
 	if err != nil { return }
 	err = Setup()

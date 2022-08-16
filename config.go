@@ -11,7 +11,8 @@ type Config struct {
 	Bin 	 string
 	ChainDir string
 	ChainCount int
-	NodesPerChain int
+	NodesPortStart int
+	NodesPerChain  int
 }
 
 func NewConfig(path string) (err error) {

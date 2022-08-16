@@ -1,6 +1,8 @@
 package main
 
 import (
+	"sync"
+
 	"github.com/polynetwork/bridge-common/log"
 )
 
@@ -29,18 +31,25 @@ func Run() (err error) {
 }
 
 func runCases(cs, res chan *Case) {
+	wg := &sync.WaitGroup{}
 	for i := 0; i < CONFIG.ChainCount; i++ {
+		wg.Add(1)
 		go func(index int) {
-			chain := &Chain{index, cs, res}
+			defer wg.Done()
+			chain := &Chain{index, cs, res, CONFIG.Bin, CONFIG.NodesPerChain, CONFIG.NodesPortStart}
 			log.Info("Launching chain", "index", index)
 			chain.Run()
 		} (i)
 	}
+	wg.Wait()
 }
 
 type Chain struct {
 	index int
 	cs, res chan *Case
+	bin string
+	nodes int
+	port int
 }
 
 func (c *Chain) Run() (err error) {
