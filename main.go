@@ -3,8 +3,8 @@ package main
 import (
 	"os"
 
-	"github.com/urfave/cli/v2"
 	"github.com/polynetwork/bridge-common/log"
+	"github.com/urfave/cli/v2"
 )
 
 func main() {
@@ -15,8 +15,14 @@ func main() {
 		Before: Init,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name: "config",
+				Name:  "config",
 				Value: "config.json",
+			},
+		},
+		Commands: cli.Commands{
+			{
+				Name:   "dump",
+				Action: dump,
 			},
 		},
 	}
@@ -35,7 +41,9 @@ func start(ctx *cli.Context) (err error) {
 func Init(ctx *cli.Context) (err error) {
 	log.Init(nil)
 	err = NewConfig(ctx.String("config"))
-	if err != nil { return }
+	if err != nil {
+		return
+	}
 	err = Setup()
 	return
 }

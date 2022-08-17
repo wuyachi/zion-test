@@ -67,8 +67,8 @@ type ActionBase struct {
 	ShouldBefore uint64
 }
 
-func (a *ActionBase) StartAt() uint64 { return a.Block }
-func (a *ActionBase) Before() uint64  { return a.ShouldBefore }
+func (a *ActionBase) StartAt() uint64 { return a.Block + (a.Epoch - 1) * uint64(CONFIG.BlocksPerEpoch) }
+func (a *ActionBase) Before() uint64  { return a.ShouldBefore + (a.Epoch - 1) * uint64(CONFIG.BlocksPerEpoch) }
 
 type SendTx struct {
 	ActionBase
