@@ -9,6 +9,7 @@ import (
 
 	"github.com/polynetwork/bridge-common/chains/eth"
 	"github.com/polynetwork/bridge-common/log"
+	"github.com/urfave/cli/v2"
 )
 
 func Run() (err error) {
@@ -78,7 +79,7 @@ func (c *Chain) Start() {
 	if err != nil {
 		log.Fatal("Failed to start chain", "index", c.index, "err", err)
 	}
-	time.Sleep(time.Second * 10)
+	time.Sleep(time.Second * 30)
 	var urls []string
 	for i := 0; i < c.nodes; i++ {
 		urls = append(urls, fmt.Sprintf("http://127.0.0.1:%v", CONFIG.NodesPortStart + (c.index * 100) + i))
@@ -102,5 +103,18 @@ func runCmd(bin string, args ...string) (err error) {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()
+	return
+}
+
+
+func runChain(ctx *cli.Context) (err error) {
+	chain := &Chain{0, CONFIG.Bin, nil, nil, CONFIG.NodesPerChain, CONFIG.NodesPortStart, nil}
+	chain.Start()
+	return
+}
+
+func stopChain(ctx *cli.Context) (err error) {
+	chain := &Chain{0, CONFIG.Bin, nil, nil, CONFIG.NodesPerChain, CONFIG.NodesPortStart, nil}
+	chain.Stop()
 	return
 }

@@ -24,6 +24,14 @@ func main() {
 				Name:   "dump",
 				Action: dump,
 			},
+			{
+				Name:   "spawn",
+				Action: runChain,
+			},
+			{
+				Name:   "stop",
+				Action: stopChain,
+			},
 		},
 	}
 

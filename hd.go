@@ -2,8 +2,10 @@ package main
 
 import (
 	"crypto/ecdsa"
+	"crypto/elliptic"
 	"fmt"
 	"math/big"
+	"strings"
 
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcutil/hdkeychain"
@@ -61,9 +63,28 @@ func (hd *HDAddress) PrivateKey() *ecdsa.PrivateKey {
 	return privateKey.ToECDSA()
 }
 
+type Discv5NodeID [64]byte
+
+func (n Discv5NodeID) String() string {
+	return fmt.Sprintf("%x", n[:])
+}
+
+// PubkeyID returns a marshaled representation of the given public key.
+func PubkeyID(pub *ecdsa.PublicKey) Discv5NodeID {
+	var id Discv5NodeID
+	pbytes := elliptic.Marshal(pub.Curve, pub.X, pub.Y)
+	if len(pbytes)-1 != len(id) {
+		panic(fmt.Errorf("need %d bit pubkey, got %d bits", (len(id)+1)*8, len(pbytes)))
+	}
+	copy(id[:], pbytes[1:])
+	return id
+}
+
+
 func dump(ctx *cli.Context) (err error) {
 	alloc := make(map[string]map[string]string)
 	var validators []map[string]string
+	var seeds, addresses []string
 	unit := new(big.Int).Exp(big.NewInt(10), big.NewInt(10), nil)
 	allocPerUser := new(big.Int).Mul(big.NewInt(1000000), unit)
 	allocPerStaker := new(big.Int).Mul(big.NewInt(2000000), unit)
@@ -80,9 +101,11 @@ func dump(ctx *cli.Context) (err error) {
 		address := w.ToAddress().Hex()
 		alloc[address] = map[string]string{"balance": allocPerStaker.String()}
 		privs = append(privs, fmt.Sprintf("%x", crypto.FromECDSA(w.PrivateKey())))
-		pubs = append(pubs, fmt.Sprintf("%#x", crypto.FromECDSAPub(&w.PrivateKey().PublicKey)))
+		pubs = append(pubs, fmt.Sprintf("%#x", crypto.CompressPubkey(&w.PrivateKey().PublicKey)))
+		addresses = append(addresses, w.ToAddress().Hex())
 
 		if i < 4 {
+			seeds = append(seeds, fmt.Sprintf("enode://%s@127.0.0.1:%v?discport=0", PubkeyID(&w.PrivateKey().PublicKey), 1000))
 			w.Index_2 = 2
 			validators = append(validators, map[string]string{
 				"Validator": address,
@@ -97,11 +120,14 @@ func dump(ctx *cli.Context) (err error) {
 	fmt.Println("allocation")
 	fmt.Println(util.Verbose(alloc))
 	fmt.Println("Validator private keys")
-	fmt.Println(util.Verbose(privs))
+	fmt.Println(strings.Join(privs, " "))
 	fmt.Println("Validator public keys")
-	fmt.Println(util.Verbose(pubs))
+	fmt.Println(strings.Join(pubs, " "))
+	fmt.Println("Validator public addresses")
+	fmt.Println(strings.Join(addresses, " "))
 	fmt.Println("validators")
 	fmt.Println(util.Verbose(validators))
-
+	fmt.Println("Seeds")
+	fmt.Println(util.Verbose(seeds))
 	return
 }
