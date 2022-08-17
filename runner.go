@@ -1,8 +1,13 @@
 package main
 
 import (
+	"fmt"
+	"os"
+	"os/exec"
 	"sync"
+	"time"
 
+	"github.com/polynetwork/bridge-common/chains/eth"
 	"github.com/polynetwork/bridge-common/log"
 )
 
@@ -36,7 +41,7 @@ func runCases(cs, res chan *Case) {
 		wg.Add(1)
 		go func(index int) {
 			defer wg.Done()
-			chain := &Chain{index, cs, res, CONFIG.Bin, CONFIG.NodesPerChain, CONFIG.NodesPortStart}
+			chain := &Chain{index, CONFIG.Bin, cs, res, CONFIG.NodesPerChain, CONFIG.NodesPortStart, nil}
 			log.Info("Launching chain", "index", index)
 			chain.Run()
 		} (i)
@@ -46,10 +51,11 @@ func runCases(cs, res chan *Case) {
 
 type Chain struct {
 	index int
-	cs, res chan *Case
 	bin string
+	cs, res chan *Case
 	nodes int
 	port int
+	sdk *eth.SDK
 }
 
 func (c *Chain) Run() (err error) {
@@ -59,8 +65,7 @@ func (c *Chain) Run() (err error) {
 			break
 		}
 		c.Start()
-		ctx := &Context{}
-		cs.err = cs.Run(ctx)
+		cs.err = cs.Run(&Context{c.sdk})
 		c.res <- cs
 		c.Stop()
 	}
@@ -68,8 +73,33 @@ func (c *Chain) Run() (err error) {
 }
 
 func (c *Chain) Start() {
+	err := runCmd(CONFIG.StartScript, c.bin, CONFIG.ChainDir, fmt.Sprint(c.index), fmt.Sprint(CONFIG.NodesPerChain), fmt.Sprint(CONFIG.NodesPortStart + (c.index * 100)))
+	if err != nil {
+		log.Fatal("Failed to start chain", "index", c.index, "err", err)
+	}
+	time.Sleep(time.Second * 10)
+	var urls []string
+	for i := 0; i < c.nodes; i++ {
+		urls = append(urls, fmt.Sprintf("http://127.0.0.1:%v", CONFIG.NodesPortStart + (c.index * 100) + i))
+	}
+	c.sdk, err = eth.WithOptions(0, urls, time.Minute, 1)
+	if err != nil { 
+		log.Fatal("Failed to create eth client", "index", c.index, "err", err)
+	}
 }
 
 func (c *Chain) Stop() {
+	err := runCmd(CONFIG.StopScript, c.bin, CONFIG.ChainDir, fmt.Sprint(c.index), fmt.Sprint(CONFIG.NodesPerChain), fmt.Sprint(CONFIG.NodesPortStart + (c.index * 100)))
+	if err != nil {
+		log.Fatal("Failed to stop chain", "index", c.index, "err", err)
+	}
+	c.sdk = nil
 }
 
+func runCmd(bin string, args ...string) (err error) {
+	cmd := exec.Command(bin, args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
+	return
+}

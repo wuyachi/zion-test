@@ -8,10 +8,13 @@ import (
 var CONFIG *Config
 
 type Config struct {
-	Bin 	 string
-	ChainDir string
-	ChainCount int
+	Bin string
+	StartScript string
+	StopScript  string
+	ChainDir    string
+	ChainCount  int
 	NodesPortStart int
+	BlocksPerEpoch int
 	NodesPerChain  int
 }
 
