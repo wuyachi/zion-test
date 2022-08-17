@@ -1,15 +1,16 @@
 package main
 
 import (
+	"main/common"
 	"sync"
 
 	"github.com/polynetwork/bridge-common/log"
 )
 
 func Run() (err error) {
-	var cases []*Case
-	cs := make(chan *Case)
-	res := make(chan *Case)
+	var cases []*common.Case
+	cs := make(chan *common.Case)
+	res := make(chan *common.Case)
 	go func() {
 		for i, c := range cases {
 			c.index = i
@@ -21,16 +22,16 @@ func Run() (err error) {
 	}()
 	go func() {
 		for i := 0; i < len(cases); i++ {
-			c := <- res
+			c := <-res
 			log.Info("Ran case", "index", c.index, "err", c.err)
 		}
-	} ()
+	}()
 
 	runCases(cs, res)
 	return
 }
 
-func runCases(cs, res chan *Case) {
+func runCases(cs, res chan *common.Case) {
 	wg := &sync.WaitGroup{}
 	for i := 0; i < CONFIG.ChainCount; i++ {
 		wg.Add(1)
@@ -39,27 +40,27 @@ func runCases(cs, res chan *Case) {
 			chain := &Chain{index, cs, res, CONFIG.Bin, CONFIG.NodesPerChain, CONFIG.NodesPortStart}
 			log.Info("Launching chain", "index", index)
 			chain.Run()
-		} (i)
+		}(i)
 	}
 	wg.Wait()
 }
 
 type Chain struct {
-	index int
-	cs, res chan *Case
-	bin string
-	nodes int
-	port int
+	index   int
+	cs, res chan *common.Case
+	bin     string
+	nodes   int
+	port    int
 }
 
 func (c *Chain) Run() (err error) {
 	for {
-		cs := <- c.cs
+		cs := <-c.cs
 		if cs == nil {
 			break
 		}
 		c.Start()
-		ctx := &Context{}
+		ctx := &common.Context{}
 		cs.err = cs.Run(ctx)
 		c.res <- cs
 		c.Stop()
@@ -72,4 +73,3 @@ func (c *Chain) Start() {
 
 func (c *Chain) Stop() {
 }
-
