@@ -26,10 +26,10 @@ func Run() (err error) {
 	}()
 	go func() {
 		for i := 0; i < len(cases); i++ {
-			c := <- res
+			c := <-res
 			log.Info("Ran case", "index", c.index, "err", c.err)
 		}
-	} ()
+	}()
 
 	runCases(cs, res)
 	return
@@ -44,7 +44,7 @@ func runCases(cs, res chan *Case) {
 			chain := &Chain{index, CONFIG.Bin, cs, res, CONFIG.NodesPerChain, CONFIG.NodesPortStart, nil}
 			log.Info("Launching chain", "index", index)
 			chain.Run()
-		} (i)
+		}(i)
 	}
 	wg.Wait()
 }
@@ -60,12 +60,13 @@ type Chain struct {
 
 func (c *Chain) Run() (err error) {
 	for {
-		cs := <- c.cs
+		cs := <-c.cs
 		if cs == nil {
 			break
 		}
 		c.Start()
-		cs.err = cs.Run(&Context{c.sdk})
+		ctx := &Context{c.sdk}
+		cs.err = cs.Run(ctx)
 		c.res <- cs
 		c.Stop()
 	}
