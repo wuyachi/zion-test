@@ -12,8 +12,20 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+func parseCases(path string) (cases []*Case, err error) {
+	return
+}
+
+func dumpResult(cases []*Case) (err error) {
+	return
+}
+
 func Run() (err error) {
-	var cases []*Case
+	cases, err := parseCases(CONFIG.Input)
+	if err != nil {
+		return
+	}
+
 	cs := make(chan *Case)
 	res := make(chan *Case)
 	go func() {
@@ -23,17 +35,22 @@ func Run() (err error) {
 			log.Info("Running case", "index", i, "action_count", len(c.actions))
 		}
 		// Signal to stop chains
-		cs <- nil
+		for i := 0; i < CONFIG.ChainCount; i++ {
+			cs <- nil
+		}
 	}()
+	done := make(chan bool)
 	go func() {
 		for i := 0; i < len(cases); i++ {
 			c := <-res
 			log.Info("Ran case", "index", c.index, "err", c.err)
 		}
+		close(done)
 	}()
 
 	runCases(cs, res)
-	return
+	<-done
+	return dumpResult(cases)
 }
 
 func runCases(cs, res chan *Case) {

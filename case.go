@@ -98,6 +98,7 @@ func (c *Case) Run(ctx *Context) (err error) {
 		r := <-res
 		c.actions[r.index].SetError(r.err)
 		if r.err != nil {
+			err = fmt.Errorf("action failure, err: %v, action_index: %v", err, r.index)
 			log.Error("Run case action failed", "case", c.index, "action", r.index, "err", err)
 		}
 	}

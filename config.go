@@ -8,24 +8,27 @@ import (
 var CONFIG *Config
 
 type Config struct {
-	Bin string
-	StartScript string
-	StopScript  string
-	ChainDir    string
-	ChainCount  int
+	Bin            string
+	StartScript    string
+	StopScript     string
+	ChainDir       string
+	ChainCount     int
 	NodesPortStart int
 	BlocksPerEpoch int
 	NodesPerChain  int
+	Input          string
 }
 
 func NewConfig(path string) (err error) {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
-		return 
+		return
 	}
 	config := &Config{}
 	err = json.Unmarshal(data, config)
-	if err != nil { return }
+	if err != nil {
+		return
+	}
 	CONFIG = config
 	return
 }
