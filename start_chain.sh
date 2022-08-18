@@ -325,7 +325,7 @@ EOF
 chmod +x check
 
 echo "cmd = ./check" > .wiz
-echo "log=$WORK_DIR/case_check_$CASE_INDEX.log" >> .wiz
+echo "log=../case_check_$CASE_INDEX.log" >> .wiz
 wizard start
 popd
 
