@@ -18,7 +18,7 @@ func Run() (err error) {
 	res := make(chan *Case)
 	go func() {
 		for i, c := range cases {
-			c.index = i
+			// c.index = i
 			cs <- c
 			log.Info("Running case", "index", i, "action_count", len(c.actions))
 		}
@@ -66,7 +66,7 @@ func (c *Chain) Run() (err error) {
 			break
 		}
 		c.Start()
-		ctx := &Context{c.sdk}
+		ctx := &Context{nodes: c.sdk}
 		cs.err = cs.Run(ctx)
 		c.res <- cs
 		c.Stop()

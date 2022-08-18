@@ -90,7 +90,7 @@ func (a *RawAction) Pack(nonce uint64) (Action, error) {
 		}
 		return &SendTx{
 			ActionBase:    a.ActionBase,
-			Tx:            *tx,
+			Tx:            tx,
 			ShouldSucceed: a.ShouldSucceed,
 		}, nil
 	}
