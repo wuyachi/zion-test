@@ -106,7 +106,7 @@ func (c *Chain) Run() (err error) {
 
 func (c *Chain) Start(caseIndex int) {
 	err := runCmd(CONFIG.StartScript, c.bin, CONFIG.ChainDir, fmt.Sprint(c.index), fmt.Sprint(CONFIG.NodesPerChain), fmt.Sprint(CONFIG.NodesPortStart+(c.index*100)),
-		CONFIG.CHECK_BIN, fmt.Sprint(caseIndex),
+		CONFIG.CheckBin, fmt.Sprint(caseIndex),
 	)
 	if err != nil {
 		log.Fatal("Failed to start chain", "index", c.index, "err", err)
@@ -128,7 +128,7 @@ func (c *Chain) Stop(caseIndex int) {
 		c.sdk = nil
 	}
 	err := runCmd(CONFIG.StopScript, c.bin, CONFIG.ChainDir, fmt.Sprint(c.index), fmt.Sprint(CONFIG.NodesPerChain), fmt.Sprint(CONFIG.NodesPortStart+(c.index*100)),
-		CONFIG.CHECK_BIN, fmt.Sprint(caseIndex),
+		CONFIG.CheckBin, fmt.Sprint(caseIndex),
 	)
 	if err != nil {
 		log.Fatal("Failed to stop chain", "index", c.index, "err", err)
