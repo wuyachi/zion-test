@@ -6,4 +6,5 @@ chains
 test
 temp
 logs
+.DS_Store
 
