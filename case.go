@@ -83,16 +83,18 @@ func (c *Case) Run(ctx *Context) (err error) {
 	}
 	res := make(chan result, len(c.actions))
 	for i, item := range c.plan {
-		log.Info("Running plan", "index", i, "action_count", len(item.actions), "at", item.start)
+		log.Info("Scheduling plan", "index", i, "action_count", len(item.actions), "at", item.start)
 		for _, action := range item.actions {
 			go func(a Action) {
 				ctx.Till(a.StartAt())
+				log.Info("Running case action", "case_index", c.index, "action_index", a.Index())
 				res <- result{ a.Run(ctx), a.Index() }
 			}(action)
 		}
 	}
 
 	for j := 0; j < len(c.actions); j++ {
+		log.Info("Waiting case actions result", "case_index", c.index, "progress", j + 1, "total", len(c.actions))
 		r := <- res
 		if r.err != nil {
 			return fmt.Errorf("%w case %v action %v", r.err, c.index, r.index)
