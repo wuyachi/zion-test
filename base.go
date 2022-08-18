@@ -77,3 +77,29 @@ const (
 
 	EventWithdrawValidator = "WithdrawValidator"
 )
+
+const (
+	MethodPropose = "propose"
+
+	MethodProposeCommunity = "proposeCommunity"
+
+	MethodProposeConfig = "proposeConfig"
+
+	MethodVoteProposal = "voteProposal"
+
+	MethodGetCommunityProposalList = "getCommunityProposalList"
+
+	MethodGetConfigProposalList = "getConfigProposalList"
+
+	MethodGetProposal = "getProposal"
+
+	MethodGetProposalList = "getProposalList"
+
+	EventPropose = "Propose"
+
+	EventProposeCommunity = "ProposeCommunity"
+
+	EventProposeConfig = "ProposeConfig"
+
+	EventVoteProposal = "VoteProposal"
+)

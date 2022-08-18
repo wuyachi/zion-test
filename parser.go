@@ -26,7 +26,7 @@ const (
 )
 
 type ParseHandler interface {
-	parseInput() error
+	parseInput(input string) error
 	parseAssertion() error
 }
 
@@ -115,11 +115,12 @@ func createRowAction(row []string, fieldsIndex map[string]int) (action *RawActio
 
 	parseHandler, err := NewParseHandler(action)
 	if err != nil {
-
+		err = fmt.Errorf("new parseHandler failed. err=%s", err)
+		return
 	}
 
 	// Input
-	err = parseHandler.parseInput()
+	err = parseHandler.parseInput(row[fieldsIndex[_Input]])
 	if err != nil {
 		err = fmt.Errorf("parse Input failed. err=%s", err)
 		return nil, err
