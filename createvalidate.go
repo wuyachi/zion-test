@@ -1,9 +1,5 @@
 package main
 
-import (
-	"strings"
-)
-
 type CreateValidatorParam struct {
 	ConsensusAddress HDAddress
 	SignerAddress    HDAddress
@@ -13,24 +9,16 @@ type CreateValidatorParam struct {
 	Desc             string
 }
 
-type CreateValidatorComposer struct {
+type CreateValidatorParser struct {
 	rawAction *RawAction
 }
 
-func (c CreateValidatorComposer) compose() error {
+func (c CreateValidatorParser) parseInput() error {
 	return nil
-}
-
-func parseCreateValidatorParam(input string) (param CreateValidatorParam, err error) {
-	param = CreateValidatorParam{}
-	paramStrs := strings.Split(input, ";")
-	_ = paramStrs[0]
-	// todo
-
-	return
-}
-
-func composeCreateValidatorInput() (input []byte, err error) {
 	//todo
-	return
+}
+
+func (c CreateValidatorParser) parseAssertion() error {
+	return nil
+	//todo
 }

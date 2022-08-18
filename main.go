@@ -18,7 +18,13 @@ func main() {
 				Name:  "config",
 				Value: "config.json",
 			},
+			&cli.StringFlag{
+				Name:  "excel",
+				Value: "testcase.xlsx",
+				Usage: "test case excel file",
+			},
 		},
+
 		Commands: cli.Commands{
 			{
 				Name:   "dump",
@@ -52,6 +58,11 @@ func Init(ctx *cli.Context) (err error) {
 	if err != nil {
 		return
 	}
+
+	if len(CONFIG.Input) == 0 {
+		CONFIG.Input = ctx.String("excel")
+	}
+
 	err = Setup()
 	return
 }
