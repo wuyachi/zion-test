@@ -19,10 +19,11 @@ type Param interface {
 
 type RawCase struct {
 	Index   int
-	Actions []RawAction
+	Actions []*RawAction
 }
 
 type RawAction struct {
+	Row           []string
 	MethodName    string
 	Input         Param
 	ShouldSucceed bool
