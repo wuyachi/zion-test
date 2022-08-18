@@ -82,17 +82,19 @@ func (c *Chain) Run() (err error) {
 		if cs == nil {
 			break
 		}
-		c.Start()
+		c.Start(cs.index)
 		ctx := &Context{nodes: c.sdk}
 		cs.err = cs.Run(ctx)
 		c.res <- cs
-		c.Stop()
+		c.Stop(cs.index)
 	}
 	return
 }
 
-func (c *Chain) Start() {
-	err := runCmd(CONFIG.StartScript, c.bin, CONFIG.ChainDir, fmt.Sprint(c.index), fmt.Sprint(CONFIG.NodesPerChain), fmt.Sprint(CONFIG.NodesPortStart+(c.index*100)))
+func (c *Chain) Start(caseIndex int) {
+	err := runCmd(CONFIG.StartScript, c.bin, CONFIG.ChainDir, fmt.Sprint(c.index), fmt.Sprint(CONFIG.NodesPerChain), fmt.Sprint(CONFIG.NodesPortStart+(c.index*100)),
+		CONFIG.CHECK_BIN, fmt.Sprint(caseIndex),
+	)
 	if err != nil {
 		log.Fatal("Failed to start chain", "index", c.index, "err", err)
 	}
@@ -107,12 +109,14 @@ func (c *Chain) Start() {
 	}
 }
 
-func (c *Chain) Stop() {
+func (c *Chain) Stop(caseIndex int) {
 	if c.sdk != nil {
 		c.sdk.Stop()
 		c.sdk = nil
 	}
-	err := runCmd(CONFIG.StopScript, c.bin, CONFIG.ChainDir, fmt.Sprint(c.index), fmt.Sprint(CONFIG.NodesPerChain), fmt.Sprint(CONFIG.NodesPortStart+(c.index*100)))
+	err := runCmd(CONFIG.StopScript, c.bin, CONFIG.ChainDir, fmt.Sprint(c.index), fmt.Sprint(CONFIG.NodesPerChain), fmt.Sprint(CONFIG.NodesPortStart+(c.index*100)),
+		CONFIG.CHECK_BIN, fmt.Sprint(caseIndex),
+	)
 	if err != nil {
 		log.Fatal("Failed to stop chain", "index", c.index, "err", err)
 	}
@@ -128,12 +132,12 @@ func runCmd(bin string, args ...string) (err error) {
 
 func runChain(ctx *cli.Context) (err error) {
 	chain := &Chain{0, CONFIG.Bin, nil, nil, CONFIG.NodesPerChain, CONFIG.NodesPortStart, nil}
-	chain.Start()
+	chain.Start(0)
 	return
 }
 
 func stopChain(ctx *cli.Context) (err error) {
 	chain := &Chain{0, CONFIG.Bin, nil, nil, CONFIG.NodesPerChain, CONFIG.NodesPortStart, nil}
-	chain.Stop()
+	chain.Stop(0)
 	return
 }

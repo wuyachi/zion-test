@@ -8,7 +8,10 @@ WORK_DIR="$2/chains"
 CHAIN_INDEX=$3
 CHAIN_NODES=$4
 PORT_START=$5
+CHECK_BIN=$6
+CASE_INDEX=$7
 
+CHAIN_DIR="$WORK_DIR/chain_$CHAIN_INDEX"
 MAX_NODE_INDEX=$(($CHAIN_NODES-1))
 CHAIN_ID=100
 
@@ -28,3 +31,7 @@ do
 done
 
 # rm -rf $WORK_DIR
+
+pushd $CHAIN_DIR
+wizard stop
+popd
