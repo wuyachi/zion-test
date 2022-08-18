@@ -80,7 +80,6 @@ func PubkeyID(pub *ecdsa.PublicKey) Discv5NodeID {
 	return id
 }
 
-
 func dump(ctx *cli.Context) (err error) {
 	alloc := make(map[string]map[string]string)
 	var validators []map[string]string

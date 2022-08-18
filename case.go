@@ -49,7 +49,7 @@ func (c *Case) Run(ctx *Context) (err error) {
 	go func() {
 		for {
 			select {
-			case <- exit:
+			case <-exit:
 				return
 			default:
 				height, err := ctx.nodes.Node().GetLatestHeight()
@@ -78,8 +78,8 @@ func (c *Case) Run(ctx *Context) (err error) {
 	sort.Slice(c.plan, func(i, j int) bool { return c.plan[i].start < c.plan[j].start })
 
 	type result struct {
-		 err error
-		 index int
+		err   error
+		index int
 	}
 	res := make(chan result, len(c.actions))
 	for i, item := range c.plan {
@@ -88,16 +88,17 @@ func (c *Case) Run(ctx *Context) (err error) {
 			go func(a Action) {
 				ctx.Till(a.StartAt())
 				log.Info("Running case action", "case_index", c.index, "action_index", a.Index())
-				res <- result{ a.Run(ctx), a.Index() }
+				res <- result{a.Run(ctx), a.Index()}
 			}(action)
 		}
 	}
 
 	for j := 0; j < len(c.actions); j++ {
-		log.Info("Waiting case actions result", "case_index", c.index, "progress", j + 1, "total", len(c.actions))
-		r := <- res
+		log.Info("Waiting case actions result", "case_index", c.index, "progress", j+1, "total", len(c.actions))
+		r := <-res
+		c.actions[r.index].SetError(r.err)
 		if r.err != nil {
-			return fmt.Errorf("%w case %v action %v", r.err, c.index, r.index)
+			log.Error("Run case action failed", "case", c.index, "action", r.index, "err", err)
 		}
 	}
 	return
@@ -114,19 +115,26 @@ type Action interface {
 	Before() uint64
 	SetIndex(int)
 	Index() int
+	Error() error
+	SetError(err error)
 }
 
 type ActionBase struct {
 	Epoch        uint64
 	Block        uint64
 	ShouldBefore uint64
-	index 		 int
+	index        int
+	err          error
 }
 
-func (a *ActionBase) StartAt() uint64 { return a.Block + (a.Epoch - 1) * uint64(CONFIG.BlocksPerEpoch) }
-func (a *ActionBase) Before() uint64  { return a.ShouldBefore + (a.Epoch - 1) * uint64(CONFIG.BlocksPerEpoch) }
+func (a *ActionBase) StartAt() uint64 { return a.Block + (a.Epoch-1)*uint64(CONFIG.BlocksPerEpoch) }
+func (a *ActionBase) Before() uint64 {
+	return a.ShouldBefore + (a.Epoch-1)*uint64(CONFIG.BlocksPerEpoch)
+}
 func (a *ActionBase) SetIndex(index int) { a.index = index }
-func (a *ActionBase) Index() int { return a.index }
+func (a *ActionBase) Index() int         { return a.index }
+func (a *ActionBase) SetError(err error) { a.err = err }
+func (a *ActionBase) Error() error       { return a.err }
 
 type SendTx struct {
 	ActionBase
@@ -136,17 +144,27 @@ type SendTx struct {
 
 func (a *SendTx) Run(ctx *Context) (err error) {
 	err = ctx.nodes.Node().SendTransaction(context.Background(), a.Tx)
-	if err != nil { return }
+	if err != nil {
+		return
+	}
 	for i := 0; i < 10; i++ {
 		height, _, pending, err := ctx.nodes.Node().Confirm(a.Tx.Hash(), 1, 10)
-		if err != nil { return err }
-		if !pending { return fmt.Errorf("possible tx lost") }
+		if err != nil {
+			return err
+		}
+		if !pending {
+			return fmt.Errorf("possible tx lost")
+		}
 		if height > 0 {
 			if height <= a.Before() {
 				rec, err := ctx.nodes.Node().TransactionReceipt(context.Background(), a.Tx.Hash())
-				if err != nil { return err }
-				if (rec.Status == 1) == a.ShouldSucceed { return nil }
-				return fmt.Errorf("transaction status error, status %v, wanted %v", rec.Status == 1, a.ShouldSucceed )
+				if err != nil {
+					return err
+				}
+				if (rec.Status == 1) == a.ShouldSucceed {
+					return nil
+				}
+				return fmt.Errorf("transaction status error, status %v, wanted %v", rec.Status == 1, a.ShouldSucceed)
 			}
 			return fmt.Errorf("tx packed too late, height %v, expected before %v", height, a.Before())
 		}
@@ -163,7 +181,9 @@ type Query struct {
 
 func (a *Query) Run(ctx *Context) (err error) {
 	output, err := ctx.nodes.Node().CallContract(context.Background(), a.Request, big.NewInt(int64(a.StartAt())))
-	if err != nil { return }
-    err = Assert(output, a.Assertions)
+	if err != nil {
+		return
+	}
+	err = Assert(output, a.Assertions)
 	return
 }

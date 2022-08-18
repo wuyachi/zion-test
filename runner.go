@@ -51,12 +51,12 @@ func runCases(cs, res chan *Case) {
 }
 
 type Chain struct {
-	index int
-	bin string
+	index   int
+	bin     string
 	cs, res chan *Case
-	nodes int
-	port int
-	sdk *eth.SDK
+	nodes   int
+	port    int
+	sdk     *eth.SDK
 }
 
 func (c *Chain) Run() (err error) {
@@ -75,23 +75,23 @@ func (c *Chain) Run() (err error) {
 }
 
 func (c *Chain) Start() {
-	err := runCmd(CONFIG.StartScript, c.bin, CONFIG.ChainDir, fmt.Sprint(c.index), fmt.Sprint(CONFIG.NodesPerChain), fmt.Sprint(CONFIG.NodesPortStart + (c.index * 100)))
+	err := runCmd(CONFIG.StartScript, c.bin, CONFIG.ChainDir, fmt.Sprint(c.index), fmt.Sprint(CONFIG.NodesPerChain), fmt.Sprint(CONFIG.NodesPortStart+(c.index*100)))
 	if err != nil {
 		log.Fatal("Failed to start chain", "index", c.index, "err", err)
 	}
 	time.Sleep(time.Second * 30)
 	var urls []string
 	for i := 0; i < c.nodes; i++ {
-		urls = append(urls, fmt.Sprintf("http://127.0.0.1:%v", CONFIG.NodesPortStart + (c.index * 100) + i))
+		urls = append(urls, fmt.Sprintf("http://127.0.0.1:%v", CONFIG.NodesPortStart+(c.index*100)+i))
 	}
 	c.sdk, err = eth.WithOptions(0, urls, time.Minute, 1)
-	if err != nil { 
+	if err != nil {
 		log.Fatal("Failed to create eth client", "index", c.index, "err", err)
 	}
 }
 
 func (c *Chain) Stop() {
-	err := runCmd(CONFIG.StopScript, c.bin, CONFIG.ChainDir, fmt.Sprint(c.index), fmt.Sprint(CONFIG.NodesPerChain), fmt.Sprint(CONFIG.NodesPortStart + (c.index * 100)))
+	err := runCmd(CONFIG.StopScript, c.bin, CONFIG.ChainDir, fmt.Sprint(c.index), fmt.Sprint(CONFIG.NodesPerChain), fmt.Sprint(CONFIG.NodesPortStart+(c.index*100)))
 	if err != nil {
 		log.Fatal("Failed to stop chain", "index", c.index, "err", err)
 	}
@@ -105,7 +105,6 @@ func runCmd(bin string, args ...string) (err error) {
 	err = cmd.Run()
 	return
 }
-
 
 func runChain(ctx *cli.Context) (err error) {
 	chain := &Chain{0, CONFIG.Bin, nil, nil, CONFIG.NodesPerChain, CONFIG.NodesPortStart, nil}
