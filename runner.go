@@ -23,7 +23,7 @@ func parseCases(path string) (cases []*Case, err error) {
 		c, e := rawCase.Pack()
 		if e != nil {
 			err = fmt.Errorf("pack rawCase failed. err=%s", e)
-			cases = append(cases, c)
+			cases = append(cases, &c)
 		}
 	}
 	return
