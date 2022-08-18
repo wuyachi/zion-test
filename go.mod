@@ -8,7 +8,7 @@ require (
 	github.com/btcsuite/btcutil v1.0.3-0.20201208143702-a53e38424cce
 	github.com/ethereum/go-ethereum v1.10.11
 	github.com/miguelmota/go-ethereum-hdwallet v0.1.1
-	github.com/polynetwork/bridge-common v0.0.34
+	github.com/polynetwork/bridge-common v0.0.34-omega
 	github.com/urfave/cli/v2 v2.11.2
 )
 

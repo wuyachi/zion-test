@@ -91,11 +91,14 @@ func (c *Chain) Start() {
 }
 
 func (c *Chain) Stop() {
+	if c.sdk != nil {
+		c.sdk.Stop()
+		c.sdk = nil
+	}
 	err := runCmd(CONFIG.StopScript, c.bin, CONFIG.ChainDir, fmt.Sprint(c.index), fmt.Sprint(CONFIG.NodesPerChain), fmt.Sprint(CONFIG.NodesPortStart+(c.index*100)))
 	if err != nil {
 		log.Fatal("Failed to stop chain", "index", c.index, "err", err)
 	}
-	c.sdk = nil
 }
 
 func runCmd(bin string, args ...string) (err error) {

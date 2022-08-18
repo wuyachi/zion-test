@@ -87,11 +87,11 @@ func dump(ctx *cli.Context) (err error) {
 	unit := new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil)
 	allocPerUser := new(big.Int).Mul(big.NewInt(1000000), unit)
 	allocPerStaker := new(big.Int).Mul(big.NewInt(2000000), unit)
-	left := new(big.Int).Mul(big.NewInt(100000000-1000000*20-2000000*12), unit)
+	left := new(big.Int).Mul(big.NewInt(100000000-1000000*50-2000000*12), unit)
 
 	var privs, pubs []string
 
-	for i := 0; i < 20; i++ {
+	for i := 0; i < 50; i++ {
 		w := &HDAddress{0, uint32(i)}
 		alloc[w.ToAddress().Hex()] = map[string]string{"balance": allocPerUser.String()}
 	}
