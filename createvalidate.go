@@ -1,19 +1,10 @@
 package main
 
-type CreateValidatorParam struct {
-	ConsensusAddress HDAddress
-	SignerAddress    HDAddress
-	ProposalAddress  HDAddress
-	Commission       uint64
-	InitStake        uint64
-	Desc             string
-}
-
 type CreateValidatorParser struct {
 	rawAction *RawAction
 }
 
-func (c CreateValidatorParser) parseInput() error {
+func (c CreateValidatorParser) parseInput(input string) error {
 	return nil
 	//todo
 }
