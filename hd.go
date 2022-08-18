@@ -85,7 +85,7 @@ func dump(ctx *cli.Context) (err error) {
 	alloc := make(map[string]map[string]string)
 	var validators []map[string]string
 	var seeds, addresses []string
-	unit := new(big.Int).Exp(big.NewInt(10), big.NewInt(10), nil)
+	unit := new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil)
 	allocPerUser := new(big.Int).Mul(big.NewInt(1000000), unit)
 	allocPerStaker := new(big.Int).Mul(big.NewInt(2000000), unit)
 	left := new(big.Int).Mul(big.NewInt(100000000-1000000*20-2000000*12), unit)

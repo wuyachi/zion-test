@@ -9,7 +9,7 @@ CHAIN_NODES=$4
 PORT_START=$5
 
 MAX_NODE_INDEX=$(($CHAIN_NODES-1))
-CHAIN_ID=100
+CHAIN_ID=60801
 PRIV_KEYS=(5f4873e69d20d714a9515dc3de5e343212a9714f5cafacfec828a0386373abc3 7b0a34d26b551ed9c30c4f9220cd3deb3e3047374fa9c447d7e1fd01795b2326 eea9fd97361a2d7361b968c24465eef3e563e77f0b56fbb2d05d3f13a3be073b 907b512c3eac860571a2299ebc495e6798d3fc650e559a7251959afff99bb8a3 dd7239d0f6ab62e998d1f89adb3173d1360ffe4d181e82019b51a379a0e9bf36 e11ae0f11e9d50cfe7aeb299f04238dd3f112c7851dbb05e35b2809e8a1f209a 8cff1dd500090e55f3834977f1917147e442c123c13c19c50a883fd11d6893b8 acadf1a084e579a5f80b07c0a8b7b2c8cdcddf9d0a50365df5f79c51f4f2c5e4 8c97a580029c0516df1f3dbf95b88143c9710f36602809c002b2489a7812b94e 2a4154119294f1648048358bcea3bbf0a2d98fd79248aaaff74e6fc9efdbdd74 f3bf5c79df5b8ada78cb0398c7df0a626d2e1c1307412e30e118a91529b34f7f c1234492837f05a2306ff9853125f3ca03df4dfe0fd76bf96ff25163421fd6cf)
 PUB_KEYS=(0x03e60c67c8255b680975459484427a8dc039045db21a9684abaf999d8b20a16a1d 0x03742cdc052e86512d08a82424860e354cdc706716a2376834767351c2e5a8c18d 0x029a956ce28dbeb89afec1b0576be7e14daadbe636880668d57e504e0aa1e2dd43 0x03e213aad913ce29adc62df2a06123f69e7090c820c860f2fbc8fa376ed056e4d4 0x0285411291e1da075be73698a23043b7daf018fb54fb6070729e84d75213f218ac 0x03cd2c2a3251fd9170e39812e5291777f5cab17c9c777aebb50d686a2c402959b9 0x02a7ef7c7fc70aa13f461b04aed2d0a7d913f155687cabf44c8bd5251f2ff0d936 0x03461f090a1a5bf3fe4ec200bac3300864c99ec5cfdddacf8cf6a36939fb059353 0x032e758e402393ec28b21dbcca7eb464e20ac29733536145fc7beb88316df2f188 0x0334e2f8e04798e352e5b11a8b4c0a49a2fc21987bf74ecbd83291b9aa1852e367 0x0268317ebb2965c65f4471b1d215a6c5ce02692d10f271b8cac52439f69d992d21 0x0322c62a9ff1cc843fcccf2fc48da3cb3f928bab1cbf11348f9abefec345d7c063)
 ADDRESSES=(0xa7580f28d5304b55594CfC1907F36D91b3D77cE5 0xD308a07F97db36C338e8FE2AfB09267781d00811 0x58621F440dA6cdf1A79C47E75f2dc3c804789A22 0xd98c495FE343dEDb29fB3Ed6b79834dA84f23631 0x49675089329c637c59b7DA465E00c7A8fe4c3247 0xDe224dd66aeC53E5Ee234c94F9928601777dEac7 0xD3A01Ed4e1D0554a179Daebf95508b668767D441 0xcaBd7634D99020996c887AeE2B536f3fF1B71Fb6 0x7f8BB57E811B35783a125c5D14Fc2B820acA4C6B 0xC39d4b38577b1d7a465A99FCd7Bd56ce1F821A5c 0x9CDED4a330682cB88093214d1DE56D0B7aE525BF 0x5F9805B99eCb2a9C3C23f9FDafF022efeeFD79b6)
@@ -47,16 +47,6 @@ exec $BIN --mine --miner.threads 1 \
 EOF
     chmod +x node
 
-
-cat > "static-nodes.json" << EOF
-[
-  "enode://e60c67c8255b680975459484427a8dc039045db21a9684abaf999d8b20a16a1d3e78a73b268c146a5fefff657df416f31de36704aeca8c216ae7ef9a627a3e19@127.0.0.1:$(($PORT_START+1000))?discport=0",
-  "enode://742cdc052e86512d08a82424860e354cdc706716a2376834767351c2e5a8c18d2d9a8b57bf0f54b151db9a5ff0158ff51832ae9e52d77e4f116cf30561eebb27@127.0.0.1:$(($PORT_START+1001))?discport=0",
-  "enode://9a956ce28dbeb89afec1b0576be7e14daadbe636880668d57e504e0aa1e2dd43275831a98de73fcb13af099b288725fe3295196fdca6ffd032d79ca920a4c5ce@127.0.0.1:$(($PORT_START+1002))?discport=0",
-  "enode://e213aad913ce29adc62df2a06123f69e7090c820c860f2fbc8fa376ed056e4d4c702694370ae7eee479e82210d387ec7d40f09ee78aeb1c7b03e1e38c44236ff@127.0.0.1:$(($PORT_START+1003))?discport=0"
-]
-EOF
-
 cat > "genesis.json" << EOF
 {
     "config": {
@@ -77,103 +67,103 @@ cat > "genesis.json" << EOF
     },
     "alloc": {
         "0x14dC79964da2C08b23698B3D3cc7Ca32193d9955": {
-            "balance": "10000000000000000"
+            "balance": "1000000000000000000000000"
         },
         "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65": {
-            "balance": "10000000000000000"
+            "balance": "1000000000000000000000000"
         },
         "0x1CBd3b2770909D4e10f157cABC84C7264073C9Ec": {
-            "balance": "10000000000000000"
+            "balance": "1000000000000000000000000"
         },
         "0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f": {
-            "balance": "10000000000000000"
+            "balance": "1000000000000000000000000"
         },
         "0x2546BcD3c84621e976D8185a91A922aE77ECEc30": {
-            "balance": "10000000000000000"
+            "balance": "1000000000000000000000000"
         },
         "0x30Bf53315437B47AeB9f6576F0f9094226342a58": {
-            "balance": "560000000000000000"
+            "balance": "56000000000000000000000000"
         },
         "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC": {
-            "balance": "10000000000000000"
+            "balance": "1000000000000000000000000"
         },
         "0x49675089329c637c59b7DA465E00c7A8fe4c3247": {
-            "balance": "20000000000000000"
+            "balance": "2000000000000000000000000"
         },
         "0x58621F440dA6cdf1A79C47E75f2dc3c804789A22": {
-            "balance": "20000000000000000"
+            "balance": "2000000000000000000000000"
         },
         "0x5F9805B99eCb2a9C3C23f9FDafF022efeeFD79b6": {
-            "balance": "20000000000000000"
+            "balance": "2000000000000000000000000"
         },
         "0x70997970C51812dc3A010C7d01b50e0d17dc79C8": {
-            "balance": "10000000000000000"
+            "balance": "1000000000000000000000000"
         },
         "0x71bE63f3384f5fb98995898A86B02Fb2426c5788": {
-            "balance": "10000000000000000"
+            "balance": "1000000000000000000000000"
         },
         "0x7f8BB57E811B35783a125c5D14Fc2B820acA4C6B": {
-            "balance": "20000000000000000"
+            "balance": "2000000000000000000000000"
         },
         "0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199": {
-            "balance": "10000000000000000"
+            "balance": "1000000000000000000000000"
         },
         "0x90F79bf6EB2c4f870365E785982E1f101E93b906": {
-            "balance": "10000000000000000"
+            "balance": "1000000000000000000000000"
         },
         "0x976EA74026E726554dB657fA54763abd0C3a0aa9": {
-            "balance": "10000000000000000"
+            "balance": "1000000000000000000000000"
         },
         "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc": {
-            "balance": "10000000000000000"
+            "balance": "1000000000000000000000000"
         },
         "0x9CDED4a330682cB88093214d1DE56D0B7aE525BF": {
-            "balance": "20000000000000000"
+            "balance": "2000000000000000000000000"
         },
         "0xBcd4042DE499D14e55001CcbB24a551F3b954096": {
-            "balance": "10000000000000000"
+            "balance": "1000000000000000000000000"
         },
         "0xC39d4b38577b1d7a465A99FCd7Bd56ce1F821A5c": {
-            "balance": "20000000000000000"
+            "balance": "2000000000000000000000000"
         },
         "0xD308a07F97db36C338e8FE2AfB09267781d00811": {
-            "balance": "20000000000000000"
+            "balance": "2000000000000000000000000"
         },
         "0xD3A01Ed4e1D0554a179Daebf95508b668767D441": {
-            "balance": "20000000000000000"
+            "balance": "2000000000000000000000000"
         },
         "0xDe224dd66aeC53E5Ee234c94F9928601777dEac7": {
-            "balance": "20000000000000000"
+            "balance": "2000000000000000000000000"
         },
         "0xFABB0ac9d68B0B445fB7357272Ff202C5651694a": {
-            "balance": "10000000000000000"
+            "balance": "1000000000000000000000000"
         },
         "0xa0Ee7A142d267C1f36714E4a8F75612F20a79720": {
-            "balance": "10000000000000000"
+            "balance": "1000000000000000000000000"
         },
         "0xa7580f28d5304b55594CfC1907F36D91b3D77cE5": {
-            "balance": "20000000000000000"
+            "balance": "2000000000000000000000000"
         },
         "0xbDA5747bFD65F08deb54cb465eB87D40e51B197E": {
-            "balance": "10000000000000000"
+            "balance": "1000000000000000000000000"
         },
         "0xcaBd7634D99020996c887AeE2B536f3fF1B71Fb6": {
-            "balance": "20000000000000000"
+            "balance": "2000000000000000000000000"
         },
         "0xcd3B766CCDd6AE721141F452C550Ca635964ce71": {
-            "balance": "10000000000000000"
+            "balance": "1000000000000000000000000"
         },
         "0xd98c495FE343dEDb29fB3Ed6b79834dA84f23631": {
-            "balance": "20000000000000000"
+            "balance": "2000000000000000000000000"
         },
         "0xdD2FD4581271e230360230F9337D5c0430Bf44C0": {
-            "balance": "10000000000000000"
+            "balance": "1000000000000000000000000"
         },
         "0xdF3e18d64BC6A983f673Ab319CCaE4f1a57C7097": {
-            "balance": "10000000000000000"
+            "balance": "1000000000000000000000000"
         },
         "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266": {
-            "balance": "10000000000000000"
+            "balance": "1000000000000000000000000"
         }
     },
     "governance": [
@@ -207,9 +197,18 @@ cat > "genesis.json" << EOF
 }
 EOF
 
-mkdir -p $NODE_DATA
-echo ${PRIV_KEYS[$i]} > "$NODE_DATA/nodekey"
-echo ${PUB_KEYS[$i]} > "$NODE_DATA/pubkey"
+mkdir -p $NODE_DATA/geth
+
+cat > "$NODE_DATA/static-nodes.json" << EOF
+[
+  "enode://e60c67c8255b680975459484427a8dc039045db21a9684abaf999d8b20a16a1d3e78a73b268c146a5fefff657df416f31de36704aeca8c216ae7ef9a627a3e19@127.0.0.1:$(($PORT_START+1000))?discport=0",
+  "enode://742cdc052e86512d08a82424860e354cdc706716a2376834767351c2e5a8c18d2d9a8b57bf0f54b151db9a5ff0158ff51832ae9e52d77e4f116cf30561eebb27@127.0.0.1:$(($PORT_START+1001))?discport=0",
+  "enode://9a956ce28dbeb89afec1b0576be7e14daadbe636880668d57e504e0aa1e2dd43275831a98de73fcb13af099b288725fe3295196fdca6ffd032d79ca920a4c5ce@127.0.0.1:$(($PORT_START+1002))?discport=0",
+  "enode://e213aad913ce29adc62df2a06123f69e7090c820c860f2fbc8fa376ed056e4d4c702694370ae7eee479e82210d387ec7d40f09ee78aeb1c7b03e1e38c44236ff@127.0.0.1:$(($PORT_START+1003))?discport=0"
+]
+EOF
+
+echo ${PRIV_KEYS[$i]} > "$NODE_DATA/geth/nodekey"
 
 logger -s init chain $CHAIN_INDEX
 $BIN init genesis.json --datadir $NODE_DATA

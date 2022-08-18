@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"sort"
 	"sync"
 	"time"
@@ -139,13 +140,13 @@ func (a *SendTx) Run(ctx *Context) (err error) {
 		if err != nil { return err }
 		if !pending { return fmt.Errorf("possible tx lost") }
 		if height > 0 {
-			if height <= a.ShouldBefore {
+			if height <= a.Before() {
 				rec, err := ctx.nodes.Node().TransactionReceipt(context.Background(), a.Tx.Hash())
 				if err != nil { return err }
 				if (rec.Status == 1) == a.ShouldSucceed { return nil }
 				return fmt.Errorf("transaction status error, status %v, wanted %v", rec.Status == 1, a.ShouldSucceed )
 			}
-			return fmt.Errorf("tx packed too late, height %v, expected before %v", height, a.ShouldBefore)
+			return fmt.Errorf("tx packed too late, height %v, expected before %v", height, a.Before())
 		}
 		time.Sleep(time.Second)
 	}
@@ -158,6 +159,9 @@ type Query struct {
 	Assertions []Assertion
 }
 
-func (a *Query) Run(ctx *Context) error {
-	return nil
+func (a *Query) Run(ctx *Context) (err error) {
+	output, err := ctx.nodes.Node().CallContract(context.Background(), a.Request, big.NewInt(int64(a.StartAt())))
+	if err != nil { return }
+    err = Assert(output, a.Assertions)
+	return
 }
