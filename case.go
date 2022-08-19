@@ -128,9 +128,9 @@ type ActionBase struct {
 	err          error
 }
 
-func (a *ActionBase) StartAt() uint64 { return a.Block + (a.Epoch-1)*uint64(CONFIG.BlocksPerEpoch) }
+func (a *ActionBase) StartAt() uint64 { return a.Block + a.Epoch*uint64(CONFIG.BlocksPerEpoch) }
 func (a *ActionBase) Before() uint64 {
-	return a.ShouldBefore + (a.Epoch-1)*uint64(CONFIG.BlocksPerEpoch)
+	return a.ShouldBefore + a.Epoch*uint64(CONFIG.BlocksPerEpoch)
 }
 func (a *ActionBase) SetIndex(index int) { a.index = index }
 func (a *ActionBase) Index() int         { return a.index }

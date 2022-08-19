@@ -111,7 +111,7 @@ func (c *Chain) Start(caseIndex int) {
 	if err != nil {
 		log.Fatal("Failed to start chain", "index", c.index, "err", err)
 	}
-	time.Sleep(time.Second * 30)
+	time.Sleep(time.Second * 10)
 	var urls []string
 	for i := 0; i < c.nodes; i++ {
 		urls = append(urls, fmt.Sprintf("http://127.0.0.1:%v", CONFIG.NodesPortStart+(c.index*100)+i))
@@ -120,6 +120,11 @@ func (c *Chain) Start(caseIndex int) {
 	if err != nil {
 		log.Fatal("Failed to create eth client", "index", c.index, "err", err)
 	}
+	height, err := c.sdk.Node().GetLatestHeight()
+	if err != nil {
+		log.Fatal("Failed to get chain height", "index", c.index, "err", err)
+	}
+	log.Info("Chain started", "index", c.index, "height", height)
 }
 
 func (c *Chain) Stop(caseIndex int) {
