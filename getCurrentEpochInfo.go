@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"main/base"
+	"main/node_manager"
 	"strings"
 )
 
@@ -11,18 +12,9 @@ type GetCurrentEpochInfoParser struct {
 }
 
 func (g *GetCurrentEpochInfoParser) ParseInput(input string) (Param, error) {
-	return nil, nil
+	param := &node_manager.GetCurrentEpochInfoParam{}
+	return param, nil
 }
-
-//type EpochInfo struct {
-//	ID          *big.Int
-//	Validators  []common.Address
-//	Signers     []common.Address
-//	Voters      []common.Address
-//	Proposers   []common.Address
-//	StartHeight *big.Int
-//	EndHeight   *big.Int
-//}
 
 func (g *GetCurrentEpochInfoParser) ParseAssertion(input string) (assertions []Assertion, err error) {
 	if input == "nil" {
