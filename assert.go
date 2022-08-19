@@ -2,12 +2,10 @@ package main
 
 import (
 	"fmt"
-	"math/big"
-	"reflect"
-	"sync/atomic"
-
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rlp"
+	"main/base"
+	"main/node_manager"
+	"reflect"
 )
 
 type AssertType uint8
@@ -128,139 +126,19 @@ func decodeResult(result []byte, methodName string) (reflect.Value, error) {
 }
 
 var MethodResultMap = map[string]interface{}{
-	"getAccumulatedCommission":       AccumulatedCommission{},
-	"getAllValidators":               AllValidators{},
-	"getCommunityInfo":               CommunityInfo{},
-	"getCurrentEpochInfo":            EpochInfo{},
-	"getEpochInfo":                   EpochInfo{},
-	"getGlobalConfig":                GlobalConfig{},
-	"getOutstandingRewards":          OutstandingRewards{},
-	"getStakeInfo":                   StakeInfo{},
-	"getStakeStartingInfo":           StakeStartingInfo{},
-	"getTotalPool":                   TotalPool{},
-	"getUnlockingInfo":               UnlockingInfo{},
-	"getValidator":                   Validator{},
-	"getValidatorAccumulatedRewards": ValidatorAccumulatedRewards{},
-	"getValidatorOutstandingRewards": ValidatorOutstandingRewards{},
-	"getValidatorSnapshotRewards":    ValidatorSnapshotRewards{},
-}
-
-type Dec struct {
-	I *big.Int
-}
-
-type LockStatus uint8
-
-const (
-	Unspecified LockStatus = 0
-	Unlock      LockStatus = 1
-	Lock        LockStatus = 2
-	Remove      LockStatus = 3
-)
-
-type AllValidators struct {
-	AllValidators []common.Address
-}
-
-type Validator struct {
-	StakeAddress     common.Address
-	ConsensusAddress common.Address
-	SignerAddress    common.Address
-	ProposalAddress  common.Address
-	Commission       *Commission
-	Status           LockStatus
-	Jailed           bool
-	UnlockHeight     *big.Int
-	TotalStake       Dec
-	SelfStake        Dec
-	Desc             string
-}
-
-type Commission struct {
-	Rate         Dec
-	UpdateHeight *big.Int
-}
-
-type GlobalConfig struct {
-	MaxCommissionChange   *big.Int
-	MinInitialStake       *big.Int
-	MinProposalStake      *big.Int
-	BlockPerEpoch         *big.Int
-	ConsensusValidatorNum uint64
-	VoterValidatorNum     uint64
-}
-
-type StakeInfo struct {
-	StakeAddress  common.Address
-	ConsensusAddr common.Address
-	Amount        Dec
-}
-
-type UnlockingInfo struct {
-	StakeAddress   common.Address
-	UnlockingStake []*UnlockingStake
-}
-
-type UnlockingStake struct {
-	Height           *big.Int
-	CompleteHeight   *big.Int
-	ConsensusAddress common.Address
-	Amount           Dec
-}
-
-type EpochInfo struct {
-	ID          *big.Int
-	Validators  []common.Address
-	Signers     []common.Address
-	Voters      []common.Address
-	Proposers   []common.Address
-	StartHeight *big.Int
-	EndHeight   *big.Int
-}
-
-type AccumulatedCommission struct {
-	Amount Dec
-}
-
-type ValidatorAccumulatedRewards struct {
-	Rewards Dec
-	Period  uint64
-}
-
-type ValidatorOutstandingRewards struct {
-	Rewards Dec
-}
-
-type OutstandingRewards struct {
-	Rewards Dec
-}
-
-type ValidatorSnapshotRewards struct {
-	AccumulatedRewardsRatio Dec
-	ReferenceCount          uint64
-}
-
-type StakeStartingInfo struct {
-	StartPeriod uint64
-	Stake       Dec
-	Height      *big.Int
-}
-
-type AddressList struct {
-	List []common.Address
-}
-
-type ConsensusSign struct {
-	Method string
-	Input  []byte
-	hash   atomic.Value
-}
-
-type CommunityInfo struct {
-	CommunityRate    *big.Int
-	CommunityAddress common.Address
-}
-
-type TotalPool struct {
-	TotalPool Dec
+	base.MethodGetAccumulatedCommission:       node_manager.AccumulatedCommission{},
+	base.MethodGetAllValidators:               node_manager.AllValidators{},
+	base.MethodGetCommunityInfo:               node_manager.CommunityInfo{},
+	base.MethodGetCurrentEpochInfo:            node_manager.EpochInfo{},
+	base.MethodGetEpochInfo:                   node_manager.EpochInfo{},
+	base.MethodGetGlobalConfig:                node_manager.GlobalConfig{},
+	base.MethodGetOutstandingRewards:          node_manager.OutstandingRewards{},
+	base.MethodGetStakeInfo:                   node_manager.StakeInfo{},
+	base.MethodGetStakeStartingInfo:           node_manager.StakeStartingInfo{},
+	base.MethodGetTotalPool:                   node_manager.TotalPool{},
+	base.MethodGetUnlockingInfo:               node_manager.UnlockingInfo{},
+	base.MethodGetValidator:                   node_manager.Validator{},
+	base.MethodGetValidatorAccumulatedRewards: node_manager.ValidatorAccumulatedRewards{},
+	base.MethodGetValidatorOutstandingRewards: node_manager.ValidatorOutstandingRewards{},
+	base.MethodGetValidatorSnapshotRewards:    node_manager.ValidatorSnapshotRewards{},
 }
