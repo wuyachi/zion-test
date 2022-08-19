@@ -163,6 +163,7 @@ func formatRow(row []string) []string {
 	for i := 0; i < len(row); i++ {
 		row[i] = strings.Replace(row[i], "[", "", -1)
 		row[i] = strings.Replace(row[i], "]", "", -1)
+		row[i] = strings.Replace(row[i], "]", "\"", -1)
 	}
 	return row
 }
