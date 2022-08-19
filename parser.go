@@ -76,6 +76,7 @@ func ParseExcel(excelPath string) (rawCases []*RawCase, err error) {
 			caseRows = make([][]string, 0)
 		}
 	}
+	log.Info("Parsed excel", "sheet_count", excel.SheetCount, "case_count", len(rawCases))
 	return
 }
 

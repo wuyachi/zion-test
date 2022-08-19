@@ -39,6 +39,8 @@ func Run() (err error) {
 		return
 	}
 
+	log.Info("Parsed cases", "count", len(cases))
+
 	cs := make(chan *Case)
 	res := make(chan *Case)
 	go func() {
