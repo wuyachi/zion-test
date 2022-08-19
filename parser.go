@@ -67,7 +67,7 @@ func ParseExcel(excelPath string) (rawCases []*RawCase, err error) {
 
 			// end of case
 			rawCase, e := createRawCase(caseRows, fieldsIndex)
-			if err != nil {
+			if e != nil {
 				log.Error("createRawCase failed", "err", e)
 				return nil, e
 			}
