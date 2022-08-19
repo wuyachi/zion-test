@@ -120,10 +120,12 @@ func createRowAction(row []string, fieldsIndex map[string]int) (action *RawActio
 	}
 
 	// Sender
-	action.Sender, err = parseAddress(row[fieldsIndex[_Sender]])
-	if err != nil {
-		err = fmt.Errorf("parse Sender failed. Sender=%s", row[fieldsIndex[_Sender]])
-		return
+	if !ReadOnly(action.MethodName) {
+		action.Sender, err = parseAddress(row[fieldsIndex[_Sender]])
+		if err != nil {
+			err = fmt.Errorf("parse Sender failed. Sender=%s", row[fieldsIndex[_Sender]])
+			return
+		}
 	}
 
 	// ActionBase
