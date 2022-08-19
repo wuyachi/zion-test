@@ -26,8 +26,8 @@ const (
 )
 
 type ParseHandler interface {
-	parseInput(input string) error
-	parseAssertion() error
+	ParseInput(input string) (Param, error)
+	ParseAssertion(input string) ([]Assertion, error)
 }
 
 func ParseExcel(excelPath string) (rawCases []*RawCase, err error) {
@@ -78,7 +78,7 @@ func createRawCase(rows [][]string, fieldsIndex map[string]int) (rawCase *RawCas
 			}
 			rawCase.Index = int(caseNo)
 		}
-		action, e := createRowAction(row, fieldsIndex)
+		action, e := createRowAction(formatRow(row), fieldsIndex)
 		if e != nil {
 			err = fmt.Errorf("createRowAction failed. caseNo:%d, row:%s, err:%s", caseNo, row, e)
 			return
@@ -89,8 +89,14 @@ func createRawCase(rows [][]string, fieldsIndex map[string]int) (rawCase *RawCas
 }
 
 func createRowAction(row []string, fieldsIndex map[string]int) (action *RawAction, err error) {
-	formatRow(row)
+	action = new(RawAction)
 	action.Row = row
+
+	parseHandler, err := NewParseHandler(action)
+	if err != nil {
+		err = fmt.Errorf("new parseHandler failed. err=%s", err)
+		return
+	}
 
 	// MethodName
 	action.MethodName = row[fieldsIndex[_MethodName]]
@@ -113,32 +119,27 @@ func createRowAction(row []string, fieldsIndex map[string]int) (action *RawActio
 		return
 	}
 
-	parseHandler, err := NewParseHandler(action)
-	if err != nil {
-		err = fmt.Errorf("new parseHandler failed. err=%s", err)
-		return
-	}
-
 	// Input
-	err = parseHandler.parseInput(row[fieldsIndex[_Input]])
+	action.Input, err = parseHandler.ParseInput(row[fieldsIndex[_Input]])
 	if err != nil {
 		err = fmt.Errorf("parse Input failed. err=%s", err)
 		return nil, err
 	}
 
 	// Assertion
-	err = parseHandler.parseAssertion()
+	action.Assertions, err = parseHandler.ParseAssertion(row[fieldsIndex[_Assertion]])
 	if err != nil {
 		err = fmt.Errorf("parse Input failed. err=%s", err)
 		return nil, err
 	}
+
 	return
 }
 
 func NewParseHandler(rawAction *RawAction) (ParseHandler, error) {
 	switch rawAction.MethodName {
 	case MethodCreateValidator:
-		return CreateValidatorParser{rawAction: rawAction}, nil
+		return &CreateValidatorParser{rawAction: rawAction}, nil
 	default:
 		err := fmt.Errorf("undefined method:%s", rawAction.MethodName)
 		return nil, err
@@ -153,27 +154,28 @@ func getFieldsIndex(fields []string) map[string]int {
 	return fieldsIndex
 }
 
-func formatRow(row []string) {
+func formatRow(row []string) []string {
 	for i := 0; i < len(row); i++ {
 		row[i] = strings.Replace(row[i], "[", "", -1)
 		row[i] = strings.Replace(row[i], "]", "", -1)
 	}
+	return row
 }
 
-func parseAddress(param string) (address HDAddress, err error) {
-	parts := strings.Split(param, ",")
+func parseAddress(input string) (address HDAddress, err error) {
+	parts := strings.Split(input, ",")
 	if len(parts) != 2 {
-		err = fmt.Errorf("invalid format Sender[%s]", param)
+		err = fmt.Errorf("invalid format Sender:%s", input)
 		return
 	}
 	index1, err := strconv.ParseUint(parts[0], 10, 32)
 	if err != nil {
-		err = fmt.Errorf("parse address failed. param=%s", param)
+		err = fmt.Errorf("parse address failed. param=%s", input)
 		return
 	}
 	index2, err := strconv.ParseUint(parts[1], 10, 32)
 	if err != nil {
-		err = fmt.Errorf("parse address failed. param=%s", param)
+		err = fmt.Errorf("parse address failed. param=%s", input)
 		return
 	}
 
@@ -182,25 +184,25 @@ func parseAddress(param string) (address HDAddress, err error) {
 	return
 }
 
-func parseActionBase(param string) (epoch, block, shouldBefore uint64, err error) {
-	parts := strings.Split(param, ",")
+func parseActionBase(input string) (epoch, block, shouldBefore uint64, err error) {
+	parts := strings.Split(input, ",")
 	if len(parts) != 3 {
-		err = fmt.Errorf("invalid format ActionBase[%s]", param)
+		err = fmt.Errorf("invalid format ActionBase:%s", input)
 		return
 	}
 	epoch, err = strconv.ParseUint(parts[0], 10, 32)
 	if err != nil {
-		err = fmt.Errorf("parse address failed. param=%s", param)
+		err = fmt.Errorf("parse address failed. param=%s", input)
 		return
 	}
 	block, err = strconv.ParseUint(parts[1], 10, 32)
 	if err != nil {
-		err = fmt.Errorf("parse address failed. param=%s", param)
+		err = fmt.Errorf("parse address failed. param=%s", input)
 		return
 	}
 	shouldBefore, err = strconv.ParseUint(parts[1], 10, 32)
 	if err != nil {
-		err = fmt.Errorf("parse address failed. param=%s", param)
+		err = fmt.Errorf("parse address failed. param=%s", input)
 		return
 	}
 	return
