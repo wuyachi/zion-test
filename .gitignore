@@ -7,4 +7,6 @@ test
 temp
 logs
 .DS_Store
+*.xls
+*.xlsx
 

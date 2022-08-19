@@ -206,7 +206,7 @@ func parseActionBase(input string) (epoch, block, shouldBefore uint64, err error
 		err = fmt.Errorf("parse address failed. param=%s", input)
 		return
 	}
-	shouldBefore, err = strconv.ParseUint(parts[1], 10, 32)
+	shouldBefore, err = strconv.ParseUint(parts[2], 10, 32)
 	if err != nil {
 		err = fmt.Errorf("parse address failed. param=%s", input)
 		return

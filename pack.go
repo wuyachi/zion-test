@@ -1,8 +1,10 @@
 package main
 
 import (
-	"github.com/devfans/zion-sdk/contracts/native/utils"
 	"math/big"
+
+	"github.com/devfans/zion-sdk/contracts/native/utils"
+	"github.com/polynetwork/bridge-common/log"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
@@ -84,6 +86,7 @@ func (a *RawAction) Pack(nonce uint64) (Action, error) {
 		}, nil
 	} else {
 		signKey := a.Sender.PrivateKey()
+		log.Info("Packing tx", "sender", a.Sender.ToAddress().Hex(), "index_1", a.Sender.Index_1, "index_2", a.Sender.Index_2)
 		tx := types.NewTransaction(nonce, NODE_MANAGER_CONTRACT, common.Big0, DEFAULT_GAS_LIMIT, DEFAULT_GAS_PRICE, data)
 		signer := types.LatestSignerForChainID(ZION_CHAINID)
 		tx, err = types.SignTx(tx, signer, signKey)

@@ -25,7 +25,7 @@ func (ctx *Context) Till(height uint64) {
 	for {
 		ctx.RLock()
 		pass = ctx.height >= height
-		ctx.Unlock()
+		ctx.RUnlock()
 		if pass {
 			return
 		}
@@ -98,7 +98,7 @@ func (c *Case) Run(ctx *Context) (err error) {
 		r := <-res
 		c.actions[r.index].SetError(r.err)
 		if r.err != nil {
-			err = fmt.Errorf("action failure, err: %v, action_index: %v", err, r.index)
+			err = fmt.Errorf("action failure, err: %v, action_index: %v", r.err, r.index)
 			log.Error("Run case action failed", "case", c.index, "action", r.index, "err", err)
 		}
 	}
@@ -148,14 +148,15 @@ func (a *SendTx) Run(ctx *Context) (err error) {
 	if err != nil {
 		return
 	}
+	currentHeight, _ := ctx.nodes.Node().GetLatestHeight()
+	log.Info("Sent tx", "current_height", currentHeight, "hash", a.Tx.Hash())
 	for i := 0; i < 10; i++ {
+		time.Sleep(time.Second * 2)
 		height, _, pending, err := ctx.nodes.Node().Confirm(a.Tx.Hash(), 1, 10)
 		if err != nil {
 			return err
 		}
-		if !pending {
-			return fmt.Errorf("possible tx lost")
-		}
+		
 		if height > 0 {
 			if height <= a.Before() {
 				rec, err := ctx.nodes.Node().TransactionReceipt(context.Background(), a.Tx.Hash())
@@ -168,8 +169,9 @@ func (a *SendTx) Run(ctx *Context) (err error) {
 				return fmt.Errorf("transaction status error, status %v, wanted %v", rec.Status == 1, a.ShouldSucceed)
 			}
 			return fmt.Errorf("tx packed too late, height %v, expected before %v", height, a.Before())
+		} else if !pending {
+			return fmt.Errorf("possible tx lost %s", a.Tx.Hash())
 		}
-		time.Sleep(time.Second)
 	}
 	return nil
 }
