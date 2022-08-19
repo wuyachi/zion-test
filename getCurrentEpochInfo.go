@@ -25,9 +25,13 @@ func (g *GetCurrentEpochInfoParser) ParseInput(input string) (Param, error) {
 //}
 
 func (g *GetCurrentEpochInfoParser) ParseAssertion(input string) (assertions []Assertion, err error) {
-	parts := strings.Split(input, ";")
-	field := parts[1]
+	if input == "nil" {
+		return nil, nil
+	}
 
+	parts := strings.Split(input, ";")
+
+	field := parts[1]
 	assertType, err := formatAssertType(parts[0])
 	if err != nil {
 		err = fmt.Errorf("ParseAssertion formatAssertType failed. err:%v", err)
