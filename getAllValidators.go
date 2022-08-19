@@ -7,16 +7,16 @@ import (
 	"strings"
 )
 
-type GetCurrentEpochInfoParser struct {
+type GetAllValidatorsParser struct {
 	rawAction *RawAction
 }
 
-func (g *GetCurrentEpochInfoParser) ParseInput(input string) (Param, error) {
-	param := &node_manager.GetCurrentEpochInfoParam{}
+func (g *GetAllValidatorsParser) ParseInput(input string) (Param, error) {
+	param := &node_manager.GetAllValidatorsParam{}
 	return param, nil
 }
 
-func (g *GetCurrentEpochInfoParser) ParseAssertion(input string) (assertions []Assertion, err error) {
+func (g *GetAllValidatorsParser) ParseAssertion(input string) (assertions []Assertion, err error) {
 	if input == "nil" {
 		return nil, nil
 	}
@@ -32,13 +32,13 @@ func (g *GetCurrentEpochInfoParser) ParseAssertion(input string) (assertions []A
 
 	assertion := Assertion{}
 	assertion.AssertType = assertType
-	assertion.MethodName = base.MethodGetCurrentEpochInfo
+	assertion.MethodName = base.MethodGetAllValidators
 
 	values := parts[2:]
 	fieldValues := make([]FieldValue, 0)
 
 	switch field {
-	case "Validators":
+	case "AllValidators":
 		for _, value := range values {
 			fieldValue := FieldValue{}
 			fieldValue.Field = field
