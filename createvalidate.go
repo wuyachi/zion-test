@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"main/node_manager"
 	"math/big"
 	"strconv"
 	"strings"
@@ -12,7 +13,7 @@ type CreateValidatorParser struct {
 }
 
 func (c *CreateValidatorParser) ParseInput(input string) (Param, error) {
-	param := &CreateValidatorParam{}
+	param := &node_manager.CreateValidatorParam{}
 
 	parts := strings.Split(input, ";")
 	if len(parts) != 6 {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/360EntSecGroup-Skylar/excelize"
 	"github.com/polynetwork/bridge-common/log"
+	"main/base"
 	"strconv"
 	"strings"
 )
@@ -28,6 +29,18 @@ const (
 type ParseHandler interface {
 	ParseInput(input string) (Param, error)
 	ParseAssertion(input string) ([]Assertion, error)
+}
+
+func NewParseHandler(rawAction *RawAction) (ParseHandler, error) {
+	switch rawAction.MethodName {
+	case base.MethodCreateValidator:
+		return &CreateValidatorParser{rawAction: rawAction}, nil
+	case base.MethodGetCurrentEpochInfo:
+		return &GetCurrentEpochInfoParser{rawAction: rawAction}, nil
+	default:
+		err := fmt.Errorf("undefined method:%s", rawAction.MethodName)
+		return nil, err
+	}
 }
 
 func ParseExcel(excelPath string) (rawCases []*RawCase, err error) {
@@ -136,16 +149,6 @@ func createRowAction(row []string, fieldsIndex map[string]int) (action *RawActio
 	return
 }
 
-func NewParseHandler(rawAction *RawAction) (ParseHandler, error) {
-	switch rawAction.MethodName {
-	case MethodCreateValidator:
-		return &CreateValidatorParser{rawAction: rawAction}, nil
-	default:
-		err := fmt.Errorf("undefined method:%s", rawAction.MethodName)
-		return nil, err
-	}
-}
-
 func getFieldsIndex(fields []string) map[string]int {
 	fieldsIndex := make(map[string]int, 0)
 	for i, field := range fields {
@@ -204,6 +207,22 @@ func parseActionBase(input string) (epoch, block, shouldBefore uint64, err error
 	if err != nil {
 		err = fmt.Errorf("parse address failed. param=%s", input)
 		return
+	}
+	return
+}
+
+func formatAssertType(tag string) (assertType AssertType, err error) {
+	switch tag {
+	case "contain":
+		assertType = Assert_Element_Contain
+	case "notcontain":
+		assertType = Assert_Element_Not_Contain
+	case "equal":
+		assertType = Assert_Element_Equal
+	case "notqueal":
+		assertType = Assert_Element_Not_Equal
+	default:
+		err = fmt.Errorf("undefined assert type:%s", tag)
 	}
 	return
 }
