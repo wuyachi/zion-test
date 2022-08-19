@@ -48,8 +48,7 @@ func ParseExcel(excelPath string) (rawCases []*RawCase, err error) {
 	if err != nil {
 		log.Fatal("open excel file failed", "err", err)
 	}
-
-	for i := 0; i < excel.SheetCount; i++ {
+	for i := 1; i <= excel.SheetCount; i++ {
 		var fieldsIndex map[string]int
 		caseRows := make([][]string, 0)
 		rows := excel.GetRows(excel.GetSheetName(i))
