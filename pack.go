@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/devfans/zion-sdk/contracts/native/utils"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum"
@@ -10,7 +11,7 @@ import (
 
 var DEFAULT_GAS_PRICE = big.NewInt(1000000000)
 var DEFAULT_GAS_LIMIT uint64 = 10000000
-var NODE_MANAGER_CONTRACT = common.HexToAddress("0x0000000000000000000000000000000000001000")
+var NODE_MANAGER_CONTRACT = utils.NodeManagerContractAddress
 var ZION_CHAINID = big.NewInt(60801)
 
 type Param interface {

@@ -105,12 +105,6 @@ func createRowAction(row []string, fieldsIndex map[string]int) (action *RawActio
 	action = new(RawAction)
 	action.Row = row
 
-	parseHandler, err := NewParseHandler(action)
-	if err != nil {
-		err = fmt.Errorf("new parseHandler failed. err=%s", err)
-		return
-	}
-
 	// MethodName
 	action.MethodName = row[fieldsIndex[_MethodName]]
 
@@ -131,6 +125,12 @@ func createRowAction(row []string, fieldsIndex map[string]int) (action *RawActio
 	// ActionBase
 	action.Epoch, action.Block, action.ShouldBefore, err = parseActionBase(row[fieldsIndex[_ActionBase]])
 	if err != nil {
+		return
+	}
+
+	parseHandler, err := NewParseHandler(action)
+	if err != nil {
+		err = fmt.Errorf("new parseHandler failed. err=%s", err)
 		return
 	}
 
