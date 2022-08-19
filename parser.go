@@ -48,8 +48,7 @@ func ParseExcel(excelPath string) (rawCases []*RawCase, err error) {
 	if err != nil {
 		log.Fatal("open excel file failed", "err", err)
 	}
-
-	for i := 0; i < excel.SheetCount; i++ {
+	for i := 1; i <= excel.SheetCount; i++ {
 		var fieldsIndex map[string]int
 		caseRows := make([][]string, 0)
 		rows := excel.GetRows(excel.GetSheetName(i))
@@ -121,10 +120,12 @@ func createRowAction(row []string, fieldsIndex map[string]int) (action *RawActio
 	}
 
 	// Sender
-	action.Sender, err = parseAddress(row[fieldsIndex[_Sender]])
-	if err != nil {
-		err = fmt.Errorf("parse Sender failed. Sender=%s", row[fieldsIndex[_Sender]])
-		return
+	if !ReadOnly(action.MethodName) {
+		action.Sender, err = parseAddress(row[fieldsIndex[_Sender]])
+		if err != nil {
+			err = fmt.Errorf("parse Sender failed. Sender=%s", row[fieldsIndex[_Sender]])
+			return
+		}
 	}
 
 	// ActionBase
@@ -162,6 +163,7 @@ func formatRow(row []string) []string {
 	for i := 0; i < len(row); i++ {
 		row[i] = strings.Replace(row[i], "[", "", -1)
 		row[i] = strings.Replace(row[i], "]", "", -1)
+		row[i] = strings.Replace(row[i], "]", "\"", -1)
 	}
 	return row
 }
