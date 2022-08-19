@@ -1,4 +1,4 @@
-package main
+package node_manager
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 	"github.com/devfans/zion-sdk/contracts/native/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"main/base"
 	"math/big"
 	"strings"
 )
@@ -15,11 +16,11 @@ func init() {
 	if err != nil {
 		panic(fmt.Sprintf("failed to load node manager abi json string: [%v]", err))
 	}
-	NodeManagerABI = &ab
+	ABI = &ab
 }
 
 var (
-	NodeManagerABI *abi.ABI
+	ABI *abi.ABI
 )
 
 type CreateValidatorParam struct {
@@ -32,7 +33,7 @@ type CreateValidatorParam struct {
 }
 
 func (m *CreateValidatorParam) Encode() ([]byte, error) {
-	return utils.PackMethodWithStruct(NodeManagerABI, MethodCreateValidator, m)
+	return utils.PackMethodWithStruct(ABI, base.MethodCreateValidator, m)
 }
 
 type UpdateValidatorParam struct {
@@ -42,7 +43,7 @@ type UpdateValidatorParam struct {
 }
 
 func (m *UpdateValidatorParam) Encode() ([]byte, error) {
-	return utils.PackMethodWithStruct(NodeManagerABI, MethodUpdateValidator, m)
+	return utils.PackMethodWithStruct(ABI, base.MethodUpdateValidator, m)
 }
 
 type UpdateCommissionParam struct {
@@ -51,7 +52,7 @@ type UpdateCommissionParam struct {
 }
 
 func (m *UpdateCommissionParam) Encode() ([]byte, error) {
-	return utils.PackMethodWithStruct(NodeManagerABI, MethodUpdateCommission, m)
+	return utils.PackMethodWithStruct(ABI, base.MethodUpdateCommission, m)
 }
 
 type StakeParam struct {
@@ -60,7 +61,7 @@ type StakeParam struct {
 }
 
 func (m *StakeParam) Encode() ([]byte, error) {
-	return utils.PackMethodWithStruct(NodeManagerABI, MethodStake, m)
+	return utils.PackMethodWithStruct(ABI, base.MethodStake, m)
 }
 
 type UnStakeParam struct {
@@ -69,7 +70,7 @@ type UnStakeParam struct {
 }
 
 func (m *UnStakeParam) Encode() ([]byte, error) {
-	return utils.PackMethodWithStruct(NodeManagerABI, MethodUnStake, m)
+	return utils.PackMethodWithStruct(ABI, base.MethodUnStake, m)
 }
 
 type CancelValidatorParam struct {
@@ -77,7 +78,7 @@ type CancelValidatorParam struct {
 }
 
 func (m *CancelValidatorParam) Encode() ([]byte, error) {
-	return utils.PackMethodWithStruct(NodeManagerABI, MethodCancelValidator, m)
+	return utils.PackMethodWithStruct(ABI, base.MethodCancelValidator, m)
 }
 
 type WithdrawValidatorParam struct {
@@ -85,7 +86,7 @@ type WithdrawValidatorParam struct {
 }
 
 func (m *WithdrawValidatorParam) Encode() ([]byte, error) {
-	return utils.PackMethodWithStruct(NodeManagerABI, MethodWithdrawValidator, m)
+	return utils.PackMethodWithStruct(ABI, base.MethodWithdrawValidator, m)
 }
 
 type WithdrawStakeRewardsParam struct {
@@ -93,7 +94,7 @@ type WithdrawStakeRewardsParam struct {
 }
 
 func (m *WithdrawStakeRewardsParam) Encode() ([]byte, error) {
-	return utils.PackMethodWithStruct(NodeManagerABI, MethodWithdrawStakeRewards, m)
+	return utils.PackMethodWithStruct(ABI, base.MethodWithdrawStakeRewards, m)
 }
 
 type WithdrawCommissionParam struct {
@@ -101,43 +102,43 @@ type WithdrawCommissionParam struct {
 }
 
 func (m *WithdrawCommissionParam) Encode() ([]byte, error) {
-	return utils.PackMethodWithStruct(NodeManagerABI, MethodWithdrawCommission, m)
+	return utils.PackMethodWithStruct(ABI, base.MethodWithdrawCommission, m)
 }
 
 type ChangeEpochParam struct{}
 
 func (m *ChangeEpochParam) Encode() ([]byte, error) {
-	return utils.PackMethod(NodeManagerABI, MethodChangeEpoch)
+	return utils.PackMethod(ABI, base.MethodChangeEpoch)
 }
 
 type WithdrawParam struct{}
 
 func (m *WithdrawParam) Encode() ([]byte, error) {
-	return utils.PackMethod(NodeManagerABI, MethodWithdraw)
+	return utils.PackMethod(ABI, base.MethodWithdraw)
 }
 
 type EndBlockParam struct{}
 
 func (m *EndBlockParam) Encode() ([]byte, error) {
-	return utils.PackMethod(NodeManagerABI, MethodEndBlock)
+	return utils.PackMethod(ABI, base.MethodEndBlock)
 }
 
 type GetGlobalConfigParam struct{}
 
 func (m *GetGlobalConfigParam) Encode() ([]byte, error) {
-	return utils.PackMethod(NodeManagerABI, MethodGetGlobalConfig)
+	return utils.PackMethod(ABI, base.MethodGetGlobalConfig)
 }
 
 type GetCommunityInfoParam struct{}
 
 func (m *GetCommunityInfoParam) Encode() ([]byte, error) {
-	return utils.PackMethod(NodeManagerABI, MethodGetCommunityInfo)
+	return utils.PackMethod(ABI, base.MethodGetCommunityInfo)
 }
 
 type GetCurrentEpochInfoParam struct{}
 
 func (m *GetCurrentEpochInfoParam) Encode() ([]byte, error) {
-	return utils.PackMethod(NodeManagerABI, MethodGetCurrentEpochInfo)
+	return utils.PackMethod(ABI, base.MethodGetCurrentEpochInfo)
 }
 
 type GetEpochInfoParam struct {
@@ -145,13 +146,13 @@ type GetEpochInfoParam struct {
 }
 
 func (m *GetEpochInfoParam) Encode() ([]byte, error) {
-	return utils.PackMethodWithStruct(NodeManagerABI, MethodGetEpochInfo, m)
+	return utils.PackMethodWithStruct(ABI, base.MethodGetEpochInfo, m)
 }
 
 type GetAllValidatorsParam struct{}
 
 func (m *GetAllValidatorsParam) Encode() ([]byte, error) {
-	return utils.PackMethod(NodeManagerABI, MethodGetAllValidators)
+	return utils.PackMethod(ABI, base.MethodGetAllValidators)
 }
 
 type GetValidatorParam struct {
@@ -159,7 +160,7 @@ type GetValidatorParam struct {
 }
 
 func (m *GetValidatorParam) Encode() ([]byte, error) {
-	return utils.PackMethodWithStruct(NodeManagerABI, MethodGetValidator, m)
+	return utils.PackMethodWithStruct(ABI, base.MethodGetValidator, m)
 }
 
 type GetStakeInfoParam struct {
@@ -168,7 +169,7 @@ type GetStakeInfoParam struct {
 }
 
 func (m *GetStakeInfoParam) Encode() ([]byte, error) {
-	return utils.PackMethodWithStruct(NodeManagerABI, MethodGetStakeInfo, m)
+	return utils.PackMethodWithStruct(ABI, base.MethodGetStakeInfo, m)
 }
 
 type GetUnlockingInfoParam struct {
@@ -176,7 +177,7 @@ type GetUnlockingInfoParam struct {
 }
 
 func (m *GetUnlockingInfoParam) Encode() ([]byte, error) {
-	return utils.PackMethodWithStruct(NodeManagerABI, MethodGetUnlockingInfo, m)
+	return utils.PackMethodWithStruct(ABI, base.MethodGetUnlockingInfo, m)
 }
 
 type GetStakeStartingInfoParam struct {
@@ -185,7 +186,7 @@ type GetStakeStartingInfoParam struct {
 }
 
 func (m *GetStakeStartingInfoParam) Encode() ([]byte, error) {
-	return utils.PackMethodWithStruct(NodeManagerABI, MethodGetStakeStartingInfo, m)
+	return utils.PackMethodWithStruct(ABI, base.MethodGetStakeStartingInfo, m)
 }
 
 type GetAccumulatedCommissionParam struct {
@@ -193,7 +194,7 @@ type GetAccumulatedCommissionParam struct {
 }
 
 func (m *GetAccumulatedCommissionParam) Encode() ([]byte, error) {
-	return utils.PackMethodWithStruct(NodeManagerABI, MethodGetAccumulatedCommission, m)
+	return utils.PackMethodWithStruct(ABI, base.MethodGetAccumulatedCommission, m)
 }
 
 type GetValidatorSnapshotRewardsParam struct {
@@ -202,7 +203,7 @@ type GetValidatorSnapshotRewardsParam struct {
 }
 
 func (m *GetValidatorSnapshotRewardsParam) Encode() ([]byte, error) {
-	return utils.PackMethodWithStruct(NodeManagerABI, MethodGetValidatorSnapshotRewards, m)
+	return utils.PackMethodWithStruct(ABI, base.MethodGetValidatorSnapshotRewards, m)
 }
 
 type GetValidatorAccumulatedRewardsParam struct {
@@ -210,7 +211,7 @@ type GetValidatorAccumulatedRewardsParam struct {
 }
 
 func (m *GetValidatorAccumulatedRewardsParam) Encode() ([]byte, error) {
-	return utils.PackMethodWithStruct(NodeManagerABI, MethodGetValidatorAccumulatedRewards, m)
+	return utils.PackMethodWithStruct(ABI, base.MethodGetValidatorAccumulatedRewards, m)
 }
 
 type GetValidatorOutstandingRewardsParam struct {
@@ -218,17 +219,17 @@ type GetValidatorOutstandingRewardsParam struct {
 }
 
 func (m *GetValidatorOutstandingRewardsParam) Encode() ([]byte, error) {
-	return utils.PackMethodWithStruct(NodeManagerABI, MethodGetValidatorOutstandingRewards, m)
+	return utils.PackMethodWithStruct(ABI, base.MethodGetValidatorOutstandingRewards, m)
 }
 
 type GetTotalPoolParam struct{}
 
 func (m *GetTotalPoolParam) Encode() ([]byte, error) {
-	return utils.PackMethod(NodeManagerABI, MethodGetTotalPool)
+	return utils.PackMethod(ABI, base.MethodGetTotalPool)
 }
 
 type GetOutstandingRewardsParam struct{}
 
 func (m *GetOutstandingRewardsParam) Encode() ([]byte, error) {
-	return utils.PackMethod(NodeManagerABI, MethodGetOutstandingRewards)
+	return utils.PackMethod(ABI, base.MethodGetOutstandingRewards)
 }

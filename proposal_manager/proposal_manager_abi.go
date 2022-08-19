@@ -1,10 +1,11 @@
-package main
+package proposal_manager
 
 import (
 	"fmt"
 	"github.com/devfans/zion-sdk/contracts/native/go_abi/proposal_manager_abi"
 	"github.com/devfans/zion-sdk/contracts/native/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"main/base"
 	"math/big"
 	"strings"
 )
@@ -14,11 +15,11 @@ func init() {
 	if err != nil {
 		panic(fmt.Sprintf("failed to load proposal manager abi json string: [%v]", err))
 	}
-	ProposalManagerABI = &ab
+	ABI = &ab
 }
 
 var (
-	ProposalManagerABI *abi.ABI
+	ABI *abi.ABI
 )
 
 type ProposeParam struct {
@@ -26,7 +27,7 @@ type ProposeParam struct {
 }
 
 func (m *ProposeParam) Encode() ([]byte, error) {
-	return utils.PackMethodWithStruct(ProposalManagerABI, MethodPropose, m)
+	return utils.PackMethodWithStruct(ABI, base.MethodPropose, m)
 }
 
 type ProposeConfigParam struct {
@@ -34,7 +35,7 @@ type ProposeConfigParam struct {
 }
 
 func (m *ProposeConfigParam) Encode() ([]byte, error) {
-	return utils.PackMethodWithStruct(ProposalManagerABI, MethodProposeConfig, m)
+	return utils.PackMethodWithStruct(ABI, base.MethodProposeConfig, m)
 }
 
 type ProposeCommunityParam struct {
@@ -42,7 +43,7 @@ type ProposeCommunityParam struct {
 }
 
 func (m *ProposeCommunityParam) Encode() ([]byte, error) {
-	return utils.PackMethodWithStruct(ProposalManagerABI, MethodProposeCommunity, m)
+	return utils.PackMethodWithStruct(ABI, base.MethodProposeCommunity, m)
 }
 
 type VoteProposalParam struct {
@@ -50,7 +51,7 @@ type VoteProposalParam struct {
 }
 
 func (m *VoteProposalParam) Encode() ([]byte, error) {
-	return utils.PackMethodWithStruct(ProposalManagerABI, MethodVoteProposal, m)
+	return utils.PackMethodWithStruct(ABI, base.MethodVoteProposal, m)
 }
 
 type GetProposalParam struct {
@@ -58,23 +59,23 @@ type GetProposalParam struct {
 }
 
 func (m *GetProposalParam) Encode() ([]byte, error) {
-	return utils.PackMethodWithStruct(ProposalManagerABI, MethodGetProposal, m)
+	return utils.PackMethodWithStruct(ABI, base.MethodGetProposal, m)
 }
 
 type GetProposalListParam struct{}
 
 func (m *GetProposalListParam) Encode() ([]byte, error) {
-	return utils.PackMethod(ProposalManagerABI, MethodGetProposalList)
+	return utils.PackMethod(ABI, base.MethodGetProposalList)
 }
 
 type GetConfigProposalListParam struct{}
 
 func (m *GetConfigProposalListParam) Encode() ([]byte, error) {
-	return utils.PackMethod(ProposalManagerABI, MethodGetConfigProposalList)
+	return utils.PackMethod(ABI, base.MethodGetConfigProposalList)
 }
 
 type GetCommunityProposalListParam struct{}
 
 func (m *GetCommunityProposalListParam) Encode() ([]byte, error) {
-	return utils.PackMethod(ProposalManagerABI, MethodGetCommunityProposalList)
+	return utils.PackMethod(ABI, base.MethodGetCommunityProposalList)
 }
