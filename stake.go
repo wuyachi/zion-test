@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"main/base"
 	"main/node_manager"
 	"math/big"
 	"strconv"
@@ -12,32 +13,30 @@ type StakeParser struct {
 	rawAction *RawAction
 }
 
-func (s *StakeParser) ParseInput(input string) (Param, error) {
+func (s *StakeParser) ParseInput(input string) error {
 	param := &node_manager.StakeParam{}
+	s.rawAction.Input = param
 
 	parts := strings.Split(input, ";")
 	if len(parts) != 2 {
-		err := fmt.Errorf("invalid format input[%s]", input)
-		return nil, err
+		return fmt.Errorf("invalid format input[%s]", input)
 	}
 	consensusHdAddress, err := parseAddress(parts[0])
 	if err != nil {
-		err = fmt.Errorf("parse consensusAddress failed, input: %s", input)
-		return nil, err
+		return err
 	}
 
 	param.ConsensusAddress = consensusHdAddress.ToAddress()
 
 	amount, err := strconv.ParseInt(parts[1], 10, 64)
 	if err != nil {
-		err = fmt.Errorf("invalid stake amount: %s", parts[3])
-		return nil, err
+		return fmt.Errorf("invalid stake amount: %s, err: %v", parts[1], err)
 	}
-	param.Amount = big.NewInt(amount)
+	param.Amount = new(big.Int).Mul(big.NewInt(amount), big.NewInt(base.ZION_PRECISION))
 
-	return param, nil
+	return nil
 }
 
-func (s *StakeParser) ParseAssertion(input string) ([]Assertion, error) {
-	return nil, nil
+func (s *StakeParser) ParseAssertion(input string) error {
+	return nil
 }

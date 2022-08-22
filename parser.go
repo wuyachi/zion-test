@@ -27,8 +27,8 @@ const (
 )
 
 type ParseHandler interface {
-	ParseInput(input string) (Param, error)
-	ParseAssertion(input string) ([]Assertion, error)
+	ParseInput(input string) error
+	ParseAssertion(input string) error
 }
 
 func NewParseHandler(rawAction *RawAction) (ParseHandler, error) {
@@ -61,6 +61,9 @@ func NewParseHandler(rawAction *RawAction) (ParseHandler, error) {
 		return &ChangeEpochParser{rawAction: rawAction}, nil
 	case base.MethodEndBlock:
 		return &EndBlockParser{rawAction: rawAction}, nil
+	case "checkBalance":
+		return &CheckBalanceParser{rawAction: rawAction}, nil
+
 	default:
 		err := fmt.Errorf("undefined method: %s", rawAction.MethodName)
 		return nil, err
@@ -144,10 +147,10 @@ func createRowAction(row []string, fieldsIndex map[string]int) (action *RawActio
 	}
 
 	// Sender
-	if !ReadOnly(action.MethodName) {
+	switch getMethodType(action.MethodName) {
+	case TX:
 		action.Sender, err = parseAddress(row[fieldsIndex[_Sender]])
 		if err != nil {
-			err = fmt.Errorf("parse Sender failed, Sender: %s", row[fieldsIndex[_Sender]])
 			return
 		}
 	}
@@ -165,14 +168,14 @@ func createRowAction(row []string, fieldsIndex map[string]int) (action *RawActio
 	}
 
 	// Input
-	action.Input, err = parseHandler.ParseInput(row[fieldsIndex[_Input]])
+	err = parseHandler.ParseInput(row[fieldsIndex[_Input]])
 	if err != nil {
 		err = fmt.Errorf("parse Input failed, err: %s", err)
 		return nil, err
 	}
 
 	// Assertion
-	action.Assertions, err = parseHandler.ParseAssertion(row[fieldsIndex[_Assertion]])
+	err = parseHandler.ParseAssertion(row[fieldsIndex[_Assertion]])
 	if err != nil {
 		err = fmt.Errorf("parse Input failed, err: %s", err)
 		return nil, err
@@ -238,12 +241,12 @@ func parseAddress(input string) (address HDAddress, err error) {
 	parts := strings.Split(input, ",")
 	index1, err := strconv.ParseUint(parts[0], 10, 32)
 	if err != nil {
-		err = fmt.Errorf("parse address failed, input: %s", input)
+		err = fmt.Errorf("parse address failed, input: %s, err: %v", input, err)
 		return
 	}
 	index2, err := strconv.ParseUint(parts[1], 10, 32)
 	if err != nil {
-		err = fmt.Errorf("parse address failed, input: %s", input)
+		err = fmt.Errorf("parse address failed, input: %s, err: %v", input, err)
 		return
 	}
 

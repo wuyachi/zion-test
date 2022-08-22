@@ -15,7 +15,6 @@ import (
 func parseCases(path string) (cases []*Case, err error) {
 	rawCases, err := ParseExcel(path)
 	if err != nil {
-		log.Error("parse case file failed", "err", err)
 		return
 	}
 

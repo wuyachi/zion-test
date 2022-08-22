@@ -1,5 +1,7 @@
 package base
 
+const ZION_PRECISION = 1000000000000000000
+
 const (
 	MethodCancelValidator = "cancelValidator"
 

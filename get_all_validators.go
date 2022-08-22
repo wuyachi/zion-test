@@ -11,14 +11,14 @@ type GetAllValidatorsParser struct {
 	rawAction *RawAction
 }
 
-func (g *GetAllValidatorsParser) ParseInput(input string) (Param, error) {
-	param := &node_manager.GetAllValidatorsParam{}
-	return param, nil
+func (g *GetAllValidatorsParser) ParseInput(input string) error {
+	g.rawAction.Input = &node_manager.GetAllValidatorsParam{}
+	return nil
 }
 
-func (g *GetAllValidatorsParser) ParseAssertion(input string) (assertions []Assertion, err error) {
+func (g *GetAllValidatorsParser) ParseAssertion(input string) error {
 	if input == "nil" {
-		return nil, nil
+		return nil
 	}
 
 	parts := strings.Split(input, ";")
@@ -26,36 +26,33 @@ func (g *GetAllValidatorsParser) ParseAssertion(input string) (assertions []Asse
 	field := parts[1]
 	assertType, err := formatAssertType(parts[0])
 	if err != nil {
-		err = fmt.Errorf("invalid format, err: %v", err)
-		return
+		return err
 	}
 
-	assertion := Assertion{}
-	assertion.AssertType = assertType
-	assertion.MethodName = base.MethodGetAllValidators
-
 	values := parts[2:]
-	fieldValues := make([]FieldValue, 0)
-
 	switch field {
 	case "AllValidators":
+		assertion := Assertion{}
+		assertion.AssertType = assertType
+		assertion.MethodName = base.MethodGetAllValidators
+		fieldValues := make([]FieldValue, 0)
+		assertion.FieldValues = fieldValues
 		for _, value := range values {
 			fieldValue := FieldValue{}
 			fieldValue.Field = field
 			hdAddress, e := parseAddress(value)
 			if e != nil {
-				err = fmt.Errorf("parse validator address failed, addressTag: %s, err: %v", value, e)
-				return
+				return e
 			}
 			address := hdAddress.ToAddress()
 			fieldValue.Value = address
 			fieldValues = append(fieldValues, fieldValue)
 		}
-	default:
-		err = fmt.Errorf("undefined assertion field: %s", field)
-		return
-	}
-	assertion.FieldValues = fieldValues
 
-	return
+		g.rawAction.Assertions = append(g.rawAction.Assertions, assertion)
+	default:
+		return fmt.Errorf("undefined assertion field: %s", field)
+	}
+
+	return nil
 }

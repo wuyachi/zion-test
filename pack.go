@@ -16,6 +16,14 @@ var DEFAULT_GAS_LIMIT uint64 = 10000000
 var NODE_MANAGER_CONTRACT = utils.NodeManagerContractAddress
 var ZION_CHAINID = big.NewInt(60801)
 
+type MethodType int
+
+const (
+	QUERY MethodType = iota
+	TX
+	CHECK_BALANCE
+)
+
 type Param interface {
 	Encode() ([]byte, error)
 }
@@ -26,17 +34,29 @@ type RawCase struct {
 }
 
 type RawAction struct {
-	Row           []string
-	MethodName    string
-	Input         Param
-	ShouldSucceed bool
-	Assertions    []Assertion
-	Sender        HDAddress
+	Row              []string
+	MethodName       string
+	Input            Param
+	ShouldSucceed    bool
+	Assertions       []Assertion
+	Sender           HDAddress
+	BalanceAddresses []common.Address
 	ActionBase
 }
 
 func ReadOnly(methodName string) bool {
 	return methodName[0:3] == "get"
+}
+
+func getMethodType(methodName string) MethodType {
+	switch {
+	case methodName == "checkBalance":
+		return CHECK_BALANCE
+	case methodName[0:3] == "get":
+		return QUERY
+	default:
+		return TX
+	}
 }
 
 func (c *RawCase) Pack() (Case, error) {
@@ -48,12 +68,10 @@ func (c *RawCase) Pack() (Case, error) {
 		rawAction := c.Actions[i]
 		var action Action
 		var err error
-		if ReadOnly(rawAction.MethodName) {
+		switch getMethodType(rawAction.MethodName) {
+		case QUERY, CHECK_BALANCE:
 			action, err = rawAction.Pack(0)
-			if err != nil {
-				return Case{}, err
-			}
-		} else {
+		default:
 			sender := rawAction.Sender.ToAddress()
 			nonce, ok := Nonce_Map[sender]
 			if !ok {
@@ -63,9 +81,9 @@ func (c *RawCase) Pack() (Case, error) {
 				Nonce_Map[sender] += 1
 			}
 			action, err = rawAction.Pack(nonce)
-			if err != nil {
-				return Case{}, err
-			}
+		}
+		if err != nil {
+			return Case{}, err
 		}
 		res.actions = append(res.actions, action)
 	}
@@ -73,18 +91,29 @@ func (c *RawCase) Pack() (Case, error) {
 }
 
 func (a *RawAction) Pack(nonce uint64) (Action, error) {
-	data, err := a.Input.Encode()
-	if err != nil {
-		return nil, err
-	}
-	if ReadOnly(a.MethodName) {
+	switch getMethodType(a.MethodName) {
+	case CHECK_BALANCE:
+		return &CheckBalance{
+			ActionBase: a.ActionBase,
+			Addresses:  a.BalanceAddresses,
+		}, nil
+
+	case QUERY:
+		data, err := a.Input.Encode()
+		if err != nil {
+			return nil, err
+		}
 		request := ethereum.CallMsg{To: &NODE_MANAGER_CONTRACT, Data: data}
 		return &Query{
 			ActionBase: a.ActionBase,
 			Request:    request,
 			Assertions: a.Assertions,
 		}, nil
-	} else {
+	default:
+		data, err := a.Input.Encode()
+		if err != nil {
+			return nil, err
+		}
 		signKey := a.Sender.PrivateKey()
 		log.Info("Packing tx", "sender", a.Sender.ToAddress().Hex(), "index_1", a.Sender.Index_1, "index_2", a.Sender.Index_2)
 		tx := types.NewTransaction(nonce, NODE_MANAGER_CONTRACT, common.Big0, DEFAULT_GAS_LIMIT, DEFAULT_GAS_PRICE, data)
@@ -98,5 +127,6 @@ func (a *RawAction) Pack(nonce uint64) (Action, error) {
 			Tx:            tx,
 			ShouldSucceed: a.ShouldSucceed,
 		}, nil
+
 	}
 }

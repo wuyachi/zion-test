@@ -8,11 +8,11 @@ type ChangeEpochParser struct {
 	rawAction *RawAction
 }
 
-func (c *ChangeEpochParser) ParseInput(input string) (Param, error) {
-	param := &node_manager.ChangeEpochParam{}
-	return param, nil
+func (c *ChangeEpochParser) ParseInput(input string) error {
+	c.rawAction.Input = &node_manager.ChangeEpochParam{}
+	return nil
 }
 
-func (c *ChangeEpochParser) ParseAssertion(input string) ([]Assertion, error) {
-	return nil, nil
+func (c *ChangeEpochParser) ParseAssertion(input string) error {
+	return nil
 }

@@ -10,24 +10,23 @@ type WithdrawStakeRewardsParser struct {
 	rawAction *RawAction
 }
 
-func (w *WithdrawStakeRewardsParser) ParseInput(input string) (Param, error) {
+func (w *WithdrawStakeRewardsParser) ParseInput(input string) error {
 	param := &node_manager.WithdrawStakeRewardsParam{}
+	w.rawAction.Input = param
 
 	parts := strings.Split(input, ";")
 	if len(parts) != 1 {
-		err := fmt.Errorf("invalid format input[%s]", input)
-		return nil, err
+		return fmt.Errorf("invalid format input[%s]", input)
 	}
 	consensusHdAddress, err := parseAddress(parts[0])
 	if err != nil {
-		err = fmt.Errorf("parse consensusAddress failed, input: %s", input)
-		return nil, err
+		return err
 	}
 	param.ConsensusAddress = consensusHdAddress.ToAddress()
 
-	return param, nil
+	return nil
 }
 
-func (w *WithdrawStakeRewardsParser) ParseAssertion(input string) ([]Assertion, error) {
-	return nil, nil
+func (w *WithdrawStakeRewardsParser) ParseAssertion(input string) error {
+	return nil
 }
