@@ -12,31 +12,29 @@ type UpdateCommissionParser struct {
 	rawAction *RawAction
 }
 
-func (u *UpdateCommissionParser) ParseInput(input string) (Param, error) {
+func (u *UpdateCommissionParser) ParseInput(input string) error {
 	param := &node_manager.UpdateCommissionParam{}
+	u.rawAction.Input = param
 
 	parts := strings.Split(input, ";")
 	if len(parts) != 2 {
-		err := fmt.Errorf("invalid format input[%s]", input)
-		return nil, err
+		return fmt.Errorf("invalid format input[%s]", input)
 	}
 	consensusHdAddress, err := parseAddress(parts[0])
 	if err != nil {
-		err = fmt.Errorf("parse consensusAddress failed, input: %s", input)
-		return nil, err
+		return err
 	}
 	param.ConsensusAddress = consensusHdAddress.ToAddress()
 
 	commission, err := strconv.ParseInt(parts[1], 10, 64)
 	if err != nil {
-		err = fmt.Errorf("invalid commission: %s", parts[1])
-		return nil, err
+		return fmt.Errorf("invalid commission: %s, err: %v", parts[1], err)
 	}
 	param.Commission = big.NewInt(commission)
 
-	return param, nil
+	return nil
 }
 
-func (u *UpdateCommissionParser) ParseAssertion(input string) ([]Assertion, error) {
-	return nil, nil
+func (u *UpdateCommissionParser) ParseAssertion(input string) error {
+	return nil
 }

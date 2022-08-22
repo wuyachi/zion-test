@@ -12,28 +12,25 @@ type CreateValidatorParser struct {
 	rawAction *RawAction
 }
 
-func (c *CreateValidatorParser) ParseInput(input string) (Param, error) {
+func (c *CreateValidatorParser) ParseInput(input string) error {
 	param := &node_manager.CreateValidatorParam{}
+	c.rawAction.Input = param
 
 	parts := strings.Split(input, ";")
 	if len(parts) != 6 {
-		err := fmt.Errorf("invalid format input[%s]", input)
-		return nil, err
+		return fmt.Errorf("invalid format input[%s]", input)
 	}
 	consensusHdAddress, err := parseAddress(parts[0])
 	if err != nil {
-		err = fmt.Errorf("parse consensusAddress failed, input: %s", input)
-		return nil, err
+		return err
 	}
 	signerHdAddress, err := parseAddress(parts[1])
 	if err != nil {
-		err = fmt.Errorf("parse signerAddress failed, input: %s", input)
-		return nil, err
+		return err
 	}
 	proposalHdAddress, err := parseAddress(parts[2])
 	if err != nil {
-		err = fmt.Errorf("parse proposalAddress failed, input: %s", input)
-		return nil, err
+		return err
 	}
 	param.ConsensusAddress = consensusHdAddress.ToAddress()
 	param.SignerAddress = signerHdAddress.ToAddress()
@@ -41,21 +38,19 @@ func (c *CreateValidatorParser) ParseInput(input string) (Param, error) {
 
 	commission, err := strconv.ParseInt(parts[3], 10, 64)
 	if err != nil {
-		err = fmt.Errorf("invalid commission: %s", parts[3])
-		return nil, err
+		return fmt.Errorf("invalid commission: %s, err: %v", parts[3], err)
 	}
 	initStake, err := strconv.ParseInt(parts[4], 10, 64)
 	if err != nil {
-		err = fmt.Errorf("invalid initStake: %s", parts[4])
-		return nil, err
+		return fmt.Errorf("invalid initStake: %s, err: %v", parts[4], err)
 	}
 	param.Commission = big.NewInt(commission)
 	param.InitStake = big.NewInt(initStake)
 	param.Desc = parts[5]
 
-	return param, nil
+	return nil
 }
 
-func (c *CreateValidatorParser) ParseAssertion(input string) ([]Assertion, error) {
-	return nil, nil
+func (c *CreateValidatorParser) ParseAssertion(input string) error {
+	return nil
 }

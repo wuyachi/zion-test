@@ -10,32 +10,29 @@ type UpdateValidatorParser struct {
 	rawAction *RawAction
 }
 
-func (u *UpdateValidatorParser) ParseInput(input string) (Param, error) {
+func (u *UpdateValidatorParser) ParseInput(input string) error {
 	param := &node_manager.UpdateValidatorParam{}
+	u.rawAction.Input = param
 
 	parts := strings.Split(input, ";")
 	if len(parts) != 3 {
-		err := fmt.Errorf("invalid format input[%s]", input)
-		return nil, err
+		return fmt.Errorf("invalid format input[%s]", input)
 	}
 	consensusHdAddress, err := parseAddress(parts[0])
 	if err != nil {
-		err = fmt.Errorf("parse consensusAddress failed, input: %s", input)
-		return nil, err
+		return err
 	}
 	proposalHdAddress, err := parseAddress(parts[1])
 	if err != nil {
-		err = fmt.Errorf("parse proposalAddress failed, input: %s", input)
-		return nil, err
+		return err
 	}
 	param.ConsensusAddress = consensusHdAddress.ToAddress()
 	param.ProposalAddress = proposalHdAddress.ToAddress()
-
 	param.Desc = parts[2]
 
-	return param, nil
+	return nil
 }
 
-func (u *UpdateValidatorParser) ParseAssertion(input string) ([]Assertion, error) {
-	return nil, nil
+func (u *UpdateValidatorParser) ParseAssertion(input string) error {
+	return nil
 }
