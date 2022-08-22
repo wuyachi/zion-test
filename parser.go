@@ -35,6 +35,8 @@ func NewParseHandler(rawAction *RawAction) (ParseHandler, error) {
 	switch rawAction.MethodName {
 	case base.MethodCreateValidator:
 		return &CreateValidatorParser{rawAction: rawAction}, nil
+	case base.MethodWithdrawValidator:
+		return &WithdrawValidatorParser{rawAction: rawAction}, nil
 	case base.MethodUpdateValidator:
 		return &UpdateValidatorParser{rawAction: rawAction}, nil
 	case base.MethodCancelValidator:
