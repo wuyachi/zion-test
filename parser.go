@@ -39,6 +39,8 @@ func NewParseHandler(rawAction *RawAction) (ParseHandler, error) {
 		return &UpdateValidatorParser{rawAction: rawAction}, nil
 	case base.MethodCancelValidator:
 		return &CancelValidatorParser{rawAction: rawAction}, nil
+	case base.MethodUpdateCommission:
+		return &UpdateCommissionParser{rawAction: rawAction}, nil
 	case base.MethodGetCurrentEpochInfo:
 		return &GetCurrentEpochInfoParser{rawAction: rawAction}, nil
 	case base.MethodGetAllValidators:
