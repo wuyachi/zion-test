@@ -43,6 +43,8 @@ func NewParseHandler(rawAction *RawAction) (ParseHandler, error) {
 		return &StakeParser{rawAction: rawAction}, nil
 	case base.MethodUnStake:
 		return &UnStakeParser{rawAction: rawAction}, nil
+	case base.MethodWithdraw:
+		return &WithdrawParser{rawAction: rawAction}, nil
 	case base.MethodWithdrawStakeRewards:
 		return &WithdrawStakeRewardsParser{rawAction: rawAction}, nil
 	default:
