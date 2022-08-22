@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"main/base"
 	"main/node_manager"
 	"math/big"
 	"strconv"
@@ -29,9 +30,9 @@ func (s *StakeParser) ParseInput(input string) error {
 
 	amount, err := strconv.ParseInt(parts[1], 10, 64)
 	if err != nil {
-		return fmt.Errorf("invalid stake amount: %s, err: %v", parts[3], err)
+		return fmt.Errorf("invalid stake amount: %s, err: %v", parts[1], err)
 	}
-	param.Amount = big.NewInt(amount)
+	param.Amount = new(big.Int).Mul(big.NewInt(amount), big.NewInt(base.ZION_PRECISION))
 
 	return nil
 }
