@@ -59,6 +59,8 @@ func NewParseHandler(rawAction *RawAction) (ParseHandler, error) {
 		return &WithdrawStakeRewardsParser{rawAction: rawAction}, nil
 	case base.MethodChangeEpoch:
 		return &ChangeEpochParser{rawAction: rawAction}, nil
+	case base.MethodEndBlock:
+		return &EndBlockParser{rawAction: rawAction}, nil
 	default:
 		err := fmt.Errorf("undefined method: %s", rawAction.MethodName)
 		return nil, err
