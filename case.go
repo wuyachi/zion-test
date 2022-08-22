@@ -155,7 +155,7 @@ func (a *SendTx) Run(ctx *Context) (err error) {
 		return
 	}
 	currentHeight, _ := ctx.nodes.Node().GetLatestHeight()
-	log.Info("Sent tx", "current_height", currentHeight, "hash", a.Tx.Hash())
+	log.Info("Sent tx", "current_height", currentHeight, "hash", a.Tx.Hash(), "index", a.Index())
 	for i := 0; i < 10; i++ {
 		time.Sleep(time.Second * 2)
 		height, _, pending, err := ctx.nodes.Node().Confirm(a.Tx.Hash(), 1, 10)
