@@ -37,6 +37,10 @@ func NewParseHandler(rawAction *RawAction) (ParseHandler, error) {
 		return &CreateValidatorParser{rawAction: rawAction}, nil
 	case base.MethodGetCurrentEpochInfo:
 		return &GetCurrentEpochInfoParser{rawAction: rawAction}, nil
+	case base.MethodGetAllValidators:
+		return &GetAllValidatorsParser{rawAction: rawAction}, nil
+	case base.MethodStake:
+		return &StakeParser{rawAction: rawAction}, nil
 	default:
 		err := fmt.Errorf("undefined method: %s", rawAction.MethodName)
 		return nil, err
