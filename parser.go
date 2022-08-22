@@ -41,6 +41,8 @@ func NewParseHandler(rawAction *RawAction) (ParseHandler, error) {
 		return &GetAllValidatorsParser{rawAction: rawAction}, nil
 	case base.MethodStake:
 		return &StakeParser{rawAction: rawAction}, nil
+	case base.MethodUnStake:
+		return &UnStakeParser{rawAction: rawAction}, nil
 	case base.MethodWithdrawStakeRewards:
 		return &WithdrawStakeRewardsParser{rawAction: rawAction}, nil
 	default:
