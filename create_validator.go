@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"main/base"
 	"main/node_manager"
 	"math/big"
 	"strconv"
@@ -45,7 +46,8 @@ func (c *CreateValidatorParser) ParseInput(input string) error {
 		return fmt.Errorf("invalid initStake: %s, err: %v", parts[4], err)
 	}
 	param.Commission = big.NewInt(commission)
-	param.InitStake = big.NewInt(initStake)
+
+	param.InitStake = new(big.Int).Mul(big.NewInt(initStake), big.NewInt(base.ZION_PRECISION))
 	param.Desc = parts[5]
 
 	return nil
