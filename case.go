@@ -1,14 +1,19 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"math/big"
+	"net/http"
 	"sort"
 	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/polynetwork/bridge-common/chains/eth"
 	"github.com/polynetwork/bridge-common/log"
@@ -17,7 +22,8 @@ import (
 type Context struct {
 	nodes *eth.SDK
 	sync.RWMutex
-	height uint64
+	height   uint64
+	checkUrl string
 }
 
 func (ctx *Context) Till(height uint64) {
@@ -156,7 +162,7 @@ func (a *SendTx) Run(ctx *Context) (err error) {
 		if err != nil {
 			return err
 		}
-		
+
 		if height > 0 {
 			if height <= a.Before() {
 				rec, err := ctx.nodes.Node().TransactionReceipt(context.Background(), a.Tx.Hash())
@@ -189,4 +195,68 @@ func (a *Query) Run(ctx *Context) (err error) {
 	}
 	err = Assert(output, a.Assertions)
 	return
+}
+
+type CheckBalance struct {
+	ActionBase
+	Addresses []common.Address
+}
+
+func (a *CheckBalance) Run(ctx *Context) (err error) {
+	expectedBalances, err := a.CheckBalances(ctx, a.Addresses)
+	if err != nil {
+		return
+	}
+	maxDelta := new(big.Int).Mul(new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil), big.NewInt(1))
+
+	for i, address := range a.Addresses {
+		balance, err := ctx.nodes.Node().BalanceAt(context.Background(), address, big.NewInt(int64(a.StartAt())))
+		if err != nil {
+			return err
+		}
+		delta := new(big.Int).Abs(new(big.Int).Sub(balance, expectedBalances[i]))
+		if delta.Cmp(maxDelta) == 1 {
+			return fmt.Errorf("balance check failure, balance %s, expected %s, delta %s", balance, expectedBalances[i], delta)
+		}
+	}
+	return
+}
+
+func (a *CheckBalance) CheckBalances(ctx *Context, addresses []common.Address) (balances []*big.Int, err error) {
+	req := make(map[string]interface{})
+	req["addresses"] = addresses
+	req["block"] = a.StartAt()
+	balances = make([]*big.Int, 0)
+	err = PostJsonFor(ctx.checkUrl, req, balances)
+	return
+}
+
+func PostJsonFor(url string, payload interface{}, result interface{}) error {
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(data))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	respBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(respBody, result)
+	if err != nil {
+		log.Error("PostJson response", "Body", string(respBody))
+	} else {
+		log.Debug("PostJson response", "Body", string(respBody))
+	}
+	return err
 }

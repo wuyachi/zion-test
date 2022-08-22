@@ -75,7 +75,7 @@ func runCases(cs, res chan *Case) {
 		wg.Add(1)
 		go func(index int) {
 			defer wg.Done()
-			chain := &Chain{index, CONFIG.Bin, cs, res, CONFIG.NodesPerChain, CONFIG.NodesPortStart, nil}
+			chain := &Chain{index, CONFIG.Bin, cs, res, CONFIG.NodesPerChain, CONFIG.NodesPortStart + index*100, nil, ""}
 			log.Info("Launching chain", "index", index)
 			chain.Run()
 		}(i)
@@ -84,12 +84,13 @@ func runCases(cs, res chan *Case) {
 }
 
 type Chain struct {
-	index   int
-	bin     string
-	cs, res chan *Case
-	nodes   int
-	port    int
-	sdk     *eth.SDK
+	index    int
+	bin      string
+	cs, res  chan *Case
+	nodes    int
+	port     int
+	sdk      *eth.SDK
+	checkUrl string
 }
 
 func (c *Chain) Run() (err error) {
@@ -99,7 +100,7 @@ func (c *Chain) Run() (err error) {
 			break
 		}
 		c.Start(cs.index)
-		ctx := &Context{nodes: c.sdk}
+		ctx := &Context{nodes: c.sdk, checkUrl: c.checkUrl}
 		cs.err = cs.Run(ctx)
 		c.res <- cs
 		c.Stop(cs.index)
@@ -108,7 +109,7 @@ func (c *Chain) Run() (err error) {
 }
 
 func (c *Chain) Start(caseIndex int) {
-	err := runCmd(CONFIG.StartScript, c.bin, CONFIG.ChainDir, fmt.Sprint(c.index), fmt.Sprint(CONFIG.NodesPerChain), fmt.Sprint(CONFIG.NodesPortStart+(c.index*100)),
+	err := runCmd(CONFIG.StartScript, c.bin, CONFIG.ChainDir, fmt.Sprint(c.index), fmt.Sprint(CONFIG.NodesPerChain), fmt.Sprint(c.port),
 		CONFIG.CheckBin, fmt.Sprint(caseIndex),
 	)
 	if err != nil {
@@ -117,7 +118,7 @@ func (c *Chain) Start(caseIndex int) {
 	time.Sleep(time.Second * 10)
 	var urls []string
 	for i := 0; i < c.nodes; i++ {
-		urls = append(urls, fmt.Sprintf("http://127.0.0.1:%v", CONFIG.NodesPortStart+(c.index*100)+i))
+		urls = append(urls, fmt.Sprintf("http://127.0.0.1:%v", c.port+i))
 	}
 	c.sdk, err = eth.WithOptions(0, urls, time.Minute, 1)
 	if err != nil {
@@ -128,6 +129,7 @@ func (c *Chain) Start(caseIndex int) {
 		log.Fatal("Failed to get chain height", "index", c.index, "err", err)
 	}
 	log.Info("Chain started", "index", c.index, "height", height)
+	c.checkUrl = fmt.Sprintf("http://localhost:%v", c.port+2000)
 }
 
 func (c *Chain) Stop(caseIndex int) {
@@ -135,7 +137,7 @@ func (c *Chain) Stop(caseIndex int) {
 		c.sdk.Stop()
 		c.sdk = nil
 	}
-	err := runCmd(CONFIG.StopScript, c.bin, CONFIG.ChainDir, fmt.Sprint(c.index), fmt.Sprint(CONFIG.NodesPerChain), fmt.Sprint(CONFIG.NodesPortStart+(c.index*100)),
+	err := runCmd(CONFIG.StopScript, c.bin, CONFIG.ChainDir, fmt.Sprint(c.index), fmt.Sprint(CONFIG.NodesPerChain), fmt.Sprint(c.port),
 		CONFIG.CheckBin, fmt.Sprint(caseIndex),
 	)
 	if err != nil {
@@ -152,13 +154,13 @@ func runCmd(bin string, args ...string) (err error) {
 }
 
 func runChain(ctx *cli.Context) (err error) {
-	chain := &Chain{0, CONFIG.Bin, nil, nil, CONFIG.NodesPerChain, CONFIG.NodesPortStart, nil}
+	chain := &Chain{0, CONFIG.Bin, nil, nil, CONFIG.NodesPerChain, CONFIG.NodesPortStart, nil, ""}
 	chain.Start(0)
 	return
 }
 
 func stopChain(ctx *cli.Context) (err error) {
-	chain := &Chain{0, CONFIG.Bin, nil, nil, CONFIG.NodesPerChain, CONFIG.NodesPortStart, nil}
+	chain := &Chain{0, CONFIG.Bin, nil, nil, CONFIG.NodesPerChain, CONFIG.NodesPortStart, nil, ""}
 	chain.Stop(0)
 	return
 }
