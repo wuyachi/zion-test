@@ -35,10 +35,34 @@ func NewParseHandler(rawAction *RawAction) (ParseHandler, error) {
 	switch rawAction.MethodName {
 	case base.MethodCreateValidator:
 		return &CreateValidatorParser{rawAction: rawAction}, nil
+	case base.MethodWithdrawValidator:
+		return &WithdrawValidatorParser{rawAction: rawAction}, nil
+	case base.MethodUpdateValidator:
+		return &UpdateValidatorParser{rawAction: rawAction}, nil
+	case base.MethodCancelValidator:
+		return &CancelValidatorParser{rawAction: rawAction}, nil
+	case base.MethodUpdateCommission:
+		return &UpdateCommissionParser{rawAction: rawAction}, nil
+	case base.MethodWithdrawCommission:
+		return &WithdrawCommissionParser{rawAction: rawAction}, nil
 	case base.MethodGetCurrentEpochInfo:
 		return &GetCurrentEpochInfoParser{rawAction: rawAction}, nil
+	case base.MethodGetAllValidators:
+		return &GetAllValidatorsParser{rawAction: rawAction}, nil
+	case base.MethodStake:
+		return &StakeParser{rawAction: rawAction}, nil
+	case base.MethodUnStake:
+		return &UnStakeParser{rawAction: rawAction}, nil
+	case base.MethodWithdraw:
+		return &WithdrawParser{rawAction: rawAction}, nil
+	case base.MethodWithdrawStakeRewards:
+		return &WithdrawStakeRewardsParser{rawAction: rawAction}, nil
+	case base.MethodChangeEpoch:
+		return &ChangeEpochParser{rawAction: rawAction}, nil
+	case base.MethodEndBlock:
+		return &EndBlockParser{rawAction: rawAction}, nil
 	default:
-		err := fmt.Errorf("undefined method:%s", rawAction.MethodName)
+		err := fmt.Errorf("undefined method: %s", rawAction.MethodName)
 		return nil, err
 	}
 }
@@ -81,19 +105,24 @@ func ParseExcel(excelPath string) (rawCases []*RawCase, err error) {
 
 func createRawCase(rows [][]string, fieldsIndex map[string]int) (rawCase *RawCase, err error) {
 	rawCase = &RawCase{Actions: []*RawAction{}}
-	var caseNo int64
 	for i, row := range rows {
 		if i == 0 {
-			caseNo, err = strconv.ParseInt(row[fieldsIndex[_CaseNo]], 10, 64)
+			rawCase.Index, err = strconv.ParseInt(row[fieldsIndex[_CaseNo]], 10, 64)
 			if err != nil {
-				err = fmt.Errorf("invalid caseNo:%s", row[fieldsIndex[_CaseNo]])
+				err = fmt.Errorf("invalid caseNo: %s", row[fieldsIndex[_CaseNo]])
 				return
 			}
-			rawCase.Index = int(caseNo)
 		}
-		action, e := createRowAction(formatRow(row), fieldsIndex)
+
+		err = formatRow(row, fieldsIndex)
+		if err != nil {
+			err = fmt.Errorf("case format invalid, caseNo: %d, step: %d, err: %v", rawCase.Index, i+1, err)
+			return
+		}
+
+		action, e := createRowAction(row, fieldsIndex)
 		if e != nil {
-			err = fmt.Errorf("createRowAction failed. caseNo:%d, row:%s, err:%s", caseNo, row, e)
+			err = fmt.Errorf("createRowAction failed, caseNo: %d, row: %s, err: %v", rawCase.Index, row, e)
 			return
 		}
 		rawCase.Actions = append(rawCase.Actions, action)
@@ -102,6 +131,7 @@ func createRawCase(rows [][]string, fieldsIndex map[string]int) (rawCase *RawCas
 }
 
 func createRowAction(row []string, fieldsIndex map[string]int) (action *RawAction, err error) {
+
 	action = new(RawAction)
 	action.Row = row
 
@@ -117,7 +147,7 @@ func createRowAction(row []string, fieldsIndex map[string]int) (action *RawActio
 	if !ReadOnly(action.MethodName) {
 		action.Sender, err = parseAddress(row[fieldsIndex[_Sender]])
 		if err != nil {
-			err = fmt.Errorf("parse Sender failed. Sender=%s", row[fieldsIndex[_Sender]])
+			err = fmt.Errorf("parse Sender failed, Sender: %s", row[fieldsIndex[_Sender]])
 			return
 		}
 	}
@@ -130,21 +160,21 @@ func createRowAction(row []string, fieldsIndex map[string]int) (action *RawActio
 
 	parseHandler, err := NewParseHandler(action)
 	if err != nil {
-		err = fmt.Errorf("new parseHandler failed. err=%s", err)
+		err = fmt.Errorf("new parseHandler failed, err: %s", err)
 		return
 	}
 
 	// Input
 	action.Input, err = parseHandler.ParseInput(row[fieldsIndex[_Input]])
 	if err != nil {
-		err = fmt.Errorf("parse Input failed. err=%s", err)
+		err = fmt.Errorf("parse Input failed, err: %s", err)
 		return nil, err
 	}
 
 	// Assertion
 	action.Assertions, err = parseHandler.ParseAssertion(row[fieldsIndex[_Assertion]])
 	if err != nil {
-		err = fmt.Errorf("parse Input failed. err=%s", err)
+		err = fmt.Errorf("parse Input failed, err: %s", err)
 		return nil, err
 	}
 
@@ -159,29 +189,61 @@ func getFieldsIndex(fields []string) map[string]int {
 	return fieldsIndex
 }
 
-func formatRow(row []string) []string {
+func formatRow(row []string, fieldsIndex map[string]int) error {
 	for i := 0; i < len(row); i++ {
 		row[i] = strings.Replace(row[i], "[", "", -1)
 		row[i] = strings.Replace(row[i], "]", "", -1)
 		row[i] = strings.Replace(row[i], "]", "\"", -1)
 	}
-	return row
+	return checkRow(row, fieldsIndex)
+}
+
+func checkRow(row []string, fieldsIndex map[string]int) (err error) {
+	// check MethodName
+	methodName := row[fieldsIndex[_MethodName]]
+	if len(methodName) == 0 {
+		err = fmt.Errorf("invalid format [MethodName]: %s", methodName)
+		return
+	}
+
+	// check ActionBase
+	actionBase := row[fieldsIndex[_ActionBase]]
+	parts := strings.Split(actionBase, ",")
+	if len(parts) != 3 {
+		err = fmt.Errorf("invalid format [ActionBase]: %s", actionBase)
+		return
+	}
+	// check Assertion
+	assertion := row[fieldsIndex[_Assertion]]
+	if assertion != "nil" {
+		parts = strings.Split(assertion, ",")
+		if len(parts) < 3 {
+			err = fmt.Errorf("invalid format [Assertion]: %s", assertion)
+			return
+		}
+	}
+	// check Sender
+	sender := row[fieldsIndex[_Sender]]
+	if sender != "nil" {
+		parts = strings.Split(sender, ",")
+		if len(parts) != 2 {
+			err = fmt.Errorf("invalid format [Sender]: %s", sender)
+			return
+		}
+	}
+	return
 }
 
 func parseAddress(input string) (address HDAddress, err error) {
 	parts := strings.Split(input, ",")
-	if len(parts) != 2 {
-		err = fmt.Errorf("invalid format Sender:%s", input)
-		return
-	}
 	index1, err := strconv.ParseUint(parts[0], 10, 32)
 	if err != nil {
-		err = fmt.Errorf("parse address failed. param=%s", input)
+		err = fmt.Errorf("parse address failed, input: %s", input)
 		return
 	}
 	index2, err := strconv.ParseUint(parts[1], 10, 32)
 	if err != nil {
-		err = fmt.Errorf("parse address failed. param=%s", input)
+		err = fmt.Errorf("parse address failed, input: %s", input)
 		return
 	}
 
@@ -192,23 +254,19 @@ func parseAddress(input string) (address HDAddress, err error) {
 
 func parseActionBase(input string) (epoch, block, shouldBefore uint64, err error) {
 	parts := strings.Split(input, ",")
-	if len(parts) != 3 {
-		err = fmt.Errorf("invalid format ActionBase:%s", input)
-		return
-	}
 	epoch, err = strconv.ParseUint(parts[0], 10, 32)
 	if err != nil {
-		err = fmt.Errorf("parse address failed. param=%s", input)
+		err = fmt.Errorf("parse actionBase failed, input: %s", input)
 		return
 	}
 	block, err = strconv.ParseUint(parts[1], 10, 32)
 	if err != nil {
-		err = fmt.Errorf("parse address failed. param=%s", input)
+		err = fmt.Errorf("parse actionBase failed, input: %s", input)
 		return
 	}
 	shouldBefore, err = strconv.ParseUint(parts[2], 10, 32)
 	if err != nil {
-		err = fmt.Errorf("parse address failed. param=%s", input)
+		err = fmt.Errorf("parse actionBase failed, input: %s", input)
 		return
 	}
 	return
@@ -218,14 +276,14 @@ func formatAssertType(tag string) (assertType AssertType, err error) {
 	switch tag {
 	case "contain":
 		assertType = Assert_Element_Contain
-	case "notcontain":
+	case "notContain":
 		assertType = Assert_Element_Not_Contain
 	case "equal":
 		assertType = Assert_Element_Equal
-	case "notqueal":
+	case "notEqual":
 		assertType = Assert_Element_Not_Equal
 	default:
-		err = fmt.Errorf("undefined assert type:%s", tag)
+		err = fmt.Errorf("undefined assert type: %s", tag)
 	}
 	return
 }

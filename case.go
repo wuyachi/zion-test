@@ -40,7 +40,7 @@ func (ctx *Context) Till(height uint64) {
 }
 
 type Case struct {
-	index   int
+	index   int64
 	err     error
 	actions []Action
 	plan    []*ActionItem

@@ -21,7 +21,7 @@ type Param interface {
 }
 
 type RawCase struct {
-	Index   int
+	Index   int64
 	Actions []*RawAction
 }
 

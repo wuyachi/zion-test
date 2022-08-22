@@ -22,7 +22,7 @@ func parseCases(path string) (cases []*Case, err error) {
 	for _, rawCase := range rawCases {
 		c, e := rawCase.Pack()
 		if e != nil {
-			err = fmt.Errorf("pack rawCase failed. err=%s", e)
+			err = fmt.Errorf("pack rawCase failed, err: %s", e)
 			return
 		}
 		cases = append(cases, &c)
@@ -108,7 +108,7 @@ func (c *Chain) Run() (err error) {
 	return
 }
 
-func (c *Chain) Start(caseIndex int) {
+func (c *Chain) Start(caseIndex int64) {
 	err := runCmd(CONFIG.StartScript, c.bin, CONFIG.ChainDir, fmt.Sprint(c.index), fmt.Sprint(CONFIG.NodesPerChain), fmt.Sprint(c.port),
 		CONFIG.CheckBin, fmt.Sprint(caseIndex),
 	)
@@ -132,7 +132,7 @@ func (c *Chain) Start(caseIndex int) {
 	c.checkUrl = fmt.Sprintf("http://localhost:%v", c.port+2000)
 }
 
-func (c *Chain) Stop(caseIndex int) {
+func (c *Chain) Stop(caseIndex int64) {
 	if c.sdk != nil {
 		c.sdk.Stop()
 		c.sdk = nil
