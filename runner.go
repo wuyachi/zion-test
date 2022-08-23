@@ -38,11 +38,11 @@ func dumpResult(cases []*Case) (err error) {
 	}
 	for i, c := range cases {
 		if c.err == nil {
-			excel.SetCellValue(fmt.Sprintf("case%d", c.index), "M"+strconv.Itoa(i+1), "success")
+			excel.SetCellValue(fmt.Sprintf("case%d", c.index), "M"+strconv.Itoa(i+2), "success")
 		} else {
-			excel.SetCellValue(fmt.Sprintf("case%d", c.index), "M"+strconv.Itoa(i+1), c.err)
+			excel.SetCellValue(fmt.Sprintf("case%d", c.index), "M"+strconv.Itoa(i+2), c.err)
 			for j, action := range c.actions {
-				excel.SetCellValue(fmt.Sprintf("case%d", c.index), "L"+strconv.Itoa(j+1), action.Error())
+				excel.SetCellValue(fmt.Sprintf("case%d", c.index), "L"+strconv.Itoa(j+2), action.Error())
 			}
 		}
 	}
