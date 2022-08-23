@@ -97,11 +97,12 @@ func dump(ctx *cli.Context) (err error) {
 	}
 	for i := 0; i < 12; i++ {
 		w := &HDAddress{uint32(i + 1), 4}
+		alloc[w.ToAddress().Hex()] = map[string]string{"balance": allocPerStaker.String()}
+		w.Index_2 = 1
 		address := w.ToAddress().Hex()
-		alloc[address] = map[string]string{"balance": allocPerStaker.String()}
 		privs = append(privs, fmt.Sprintf("%x", crypto.FromECDSA(w.PrivateKey())))
 		pubs = append(pubs, fmt.Sprintf("%#x", crypto.CompressPubkey(&w.PrivateKey().PublicKey)))
-		addresses = append(addresses, w.ToAddress().Hex())
+		addresses = append(addresses, address)
 
 		if i < 4 {
 			seeds = append(seeds, fmt.Sprintf("enode://%s@127.0.0.1:%v?discport=0", PubkeyID(&w.PrivateKey().PublicKey), 1000))
