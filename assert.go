@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/ethereum/go-ethereum/rlp"
+	"github.com/ethereum/go-ethereum/accounts/abi"
+
 	"main/base"
 	"main/node_manager"
 	"reflect"
@@ -114,13 +116,18 @@ func assertField(result reflect.Value, AssertType AssertType, fieldValues []Fiel
 }
 
 func decodeResult(result []byte, methodName string) (reflect.Value, error) {
+	unpacked, err := node_manager.ABI.Unpack(methodName, result)
+	if err != nil {
+		return reflect.Value{}, err
+	}
+	result = *abi.ConvertType(unpacked[0], new([]byte)).(*[]byte)
 	m, ok := MethodResultMap[methodName]
 	if !ok {
 		return reflect.Value{}, fmt.Errorf("unknown method name:%s", methodName)
 	}
-	err := rlp.DecodeBytes(result, m)
+	err = rlp.DecodeBytes(result, &m)
 	if err != nil {
-		return reflect.Value{}, fmt.Errorf("fail to decode return value")
+		return reflect.Value{}, fmt.Errorf("fail to decode return value: %v %x", err, result)
 	}
 	return reflect.ValueOf(m), nil
 }
