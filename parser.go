@@ -58,10 +58,6 @@ func NewParseHandler(rawAction *RawAction) (ParseHandler, error) {
 		return &WithdrawParser{rawAction: rawAction}, nil
 	case base.MethodWithdrawStakeRewards:
 		return &WithdrawStakeRewardsParser{rawAction: rawAction}, nil
-	case base.MethodChangeEpoch:
-		return &ChangeEpochParser{rawAction: rawAction}, nil
-	case base.MethodEndBlock:
-		return &EndBlockParser{rawAction: rawAction}, nil
 	case "checkBalance":
 		return &CheckBalanceParser{rawAction: rawAction}, nil
 
