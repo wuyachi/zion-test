@@ -23,7 +23,8 @@ const (
 	_Assertion     = "Assertion"
 	_Sender        = "Sender"
 	_ActionBase    = "ActionBase"
-	_ExeuteResult  = "ExeuteResult"
+	_ActionResult  = "ExeuteResult"
+	_CaseResult    = "CaseResult"
 )
 
 type ParseHandler interface {
@@ -95,7 +96,6 @@ func ParseExcel(excelPath string) (rawCases []*RawCase, err error) {
 			// end of case
 			rawCase, e := createRawCase(caseRows, fieldsIndex)
 			if e != nil {
-				log.Error("createRawCase failed", "err", e)
 				return nil, e
 			}
 			rawCases = append(rawCases, rawCase)
@@ -125,7 +125,7 @@ func createRawCase(rows [][]string, fieldsIndex map[string]int) (rawCase *RawCas
 
 		action, e := createRowAction(row, fieldsIndex)
 		if e != nil {
-			err = fmt.Errorf("createRowAction failed, caseNo: %d, row: %s, err: %v", rawCase.Index, row, e)
+			err = fmt.Errorf("createRowAction failed, caseNo: %d, step: %d, row: %s, err: %v", rawCase.Index, i+1, row, e)
 			return
 		}
 		rawCase.Actions = append(rawCase.Actions, action)
