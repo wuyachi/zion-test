@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"github.com/360EntSecGroup-Skylar/excelize"
 	"os"
 	"os/exec"
+	"strconv"
 	"sync"
 	"time"
 
@@ -30,7 +32,17 @@ func parseCases(path string) (cases []*Case, err error) {
 }
 
 func dumpResult(cases []*Case) (err error) {
-	return
+	excel, err := excelize.OpenFile(CONFIG.Input)
+	if err != nil {
+		log.Fatal("dump result open excel file failed", "err", err)
+	}
+	for i, c := range cases {
+		excel.SetCellValue(fmt.Sprintf("case%d", c.index), "M"+strconv.Itoa(i+1), c.err)
+		for j, action := range c.actions {
+			excel.SetCellValue(fmt.Sprintf("case%d", c.index), "L"+strconv.Itoa(j+1), action.Error())
+		}
+	}
+	return nil
 }
 
 func Run() (err error) {
