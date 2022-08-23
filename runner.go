@@ -42,6 +42,7 @@ func dumpResult(cases []*Case) (err error) {
 			excel.SetCellValue(fmt.Sprintf("case%d", c.index), "L"+strconv.Itoa(j+1), action.Error())
 		}
 	}
+	excel.Save()
 	return nil
 }
 
