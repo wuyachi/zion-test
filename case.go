@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/ethereum/go-ethereum/common/math"
 	"io/ioutil"
 	"math/big"
 	"net/http"
@@ -222,12 +223,38 @@ func (a *CheckBalance) Run(ctx *Context) (err error) {
 	return
 }
 
+type CheckBalanceReq struct {
+	Id        string   `json:"Id"`
+	Addresses []string `json:"Addresses"`
+	EndHeight uint64   `json:"EndHeight"`
+}
+
+type CheckBalanceRsp struct {
+	Action string `json:"action"`
+	Desc   string `json:"desc"`
+	Error  int    `json:"error"`
+	Result struct {
+		Amount []string `json:"Amount"`
+		Id     string   `json:"Id"`
+	} `json:"result"`
+}
+
 func (a *CheckBalance) CheckBalances(ctx *Context, addresses []common.Address) (balances []*big.Int, err error) {
-	req := make(map[string]interface{})
-	req["addresses"] = addresses
-	req["block"] = a.StartAt()
+	addressArr := make([]string, 0)
+	for _, address := range addresses {
+		addressArr = append(addressArr, address.String())
+	}
+	req := &CheckBalanceReq{Addresses: addressArr, EndHeight: a.StartAt()}
+	rsp := &CheckBalanceRsp{}
 	balances = make([]*big.Int, 0)
-	err = PostJsonFor(ctx.checkUrl, req, balances)
+	err = PostJsonFor(ctx.checkUrl, req, rsp)
+	if err != nil {
+		return
+	}
+	for _, amount := range rsp.Result.Amount {
+		balance := big.NewInt(int64(math.MustParseUint64(amount)))
+		balances = append(balances, balance)
+	}
 	return
 }
 
