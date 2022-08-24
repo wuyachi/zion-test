@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/rlp"
 
 	"main/base"
 	"main/node_manager"
@@ -84,28 +84,28 @@ func assertField(result reflect.Value, AssertType AssertType, fieldValues []Fiel
 				return fmt.Errorf("%s.%s.Assert_Element_Equal receive invalid type value, expect %s, but got %s", result.Type().Name(), field, expect.Type().Name(), val.Type().Name())
 			}
 			if !equal(val, expect) {
-				return fmt.Errorf("%s.%s should equal, expect %s, but got %s", result.Type().Name(), field, expect.String(), val.String())
+				return fmt.Errorf("%s.%s should equal, expect %s, but got %s", result.Type().Name(), field, expect.Interface(), val.Interface())
 			}
 		case Assert_Element_Not_Equal:
 			if checkType(val, expect) != 1 {
 				return fmt.Errorf("%s.%s.Assert_Element_Not_Equal receive invalid type value, expect %s, but got %s", result.Type().Name(), field, expect.Type().Name(), val.Type().Name())
 			}
 			if equal(val, expect) {
-				return fmt.Errorf("%s.%s should not equal, expect %s, but got %s", result.Type().Name(), field, expect.String(), val.String())
+				return fmt.Errorf("%s.%s should not equal, expect %s, but got %s", result.Type().Name(), field, expect.Interface(), val.Interface())
 			}
 		case Assert_Element_Contain:
 			if checkType(val, expect) != 2 {
 				return fmt.Errorf("%s.%s.Assert_Element_Contain receive invalid type value, expect element of %s, but got %s", result.Type().Name(), field, expect.Type().Name(), val.Type().Name())
 			}
 			if !contain(val, expect) {
-				return fmt.Errorf("%s.%s should contain %s, but not", result.Type().Name(), field, expect.String())
+				return fmt.Errorf("%s.%s should contain %s, but not", result.Type().Name(), field, expect.Interface())
 			}
 		case Assert_Element_Not_Contain:
 			if checkType(val, expect) != 2 {
 				return fmt.Errorf("%s.%s.Assert_Element_Not_Contain receive invalid type value, expect element of %s, but got %s", result.Type().Name(), field, expect.Type().Name(), val.Type().Name())
 			}
 			if contain(val, expect) {
-				return fmt.Errorf("%s.%s should not contain %s, but still contain", result.Type().Name(), field, expect.String())
+				return fmt.Errorf("%s.%s should not contain %s, but still contain", result.Type().Name(), field, expect.Interface())
 			}
 		default:
 			return fmt.Errorf("unknown AssertType: %d ", AssertType)
@@ -121,31 +121,51 @@ func decodeResult(result []byte, methodName string) (reflect.Value, error) {
 		return reflect.Value{}, err
 	}
 	result = *abi.ConvertType(unpacked[0], new([]byte)).(*[]byte)
-	m, ok := MethodResultMap[methodName]
-	if !ok {
-		return reflect.Value{}, fmt.Errorf("unknown method name:%s", methodName)
+	m, err := getMethodResult(methodName)
+	if err != nil {
+		return reflect.Value{}, err
 	}
-	err = rlp.DecodeBytes(result, &m)
+	err = rlp.DecodeBytes(result, m)
 	if err != nil {
 		return reflect.Value{}, fmt.Errorf("fail to decode return value: %v %x", err, result)
 	}
-	return reflect.ValueOf(m), nil
+	return reflect.ValueOf(m).Elem(), nil
 }
 
-var MethodResultMap = map[string]interface{}{
-	base.MethodGetAccumulatedCommission:       node_manager.AccumulatedCommission{},
-	base.MethodGetAllValidators:               node_manager.AllValidators{},
-	base.MethodGetCommunityInfo:               node_manager.CommunityInfo{},
-	base.MethodGetCurrentEpochInfo:            node_manager.EpochInfo{},
-	base.MethodGetEpochInfo:                   node_manager.EpochInfo{},
-	base.MethodGetGlobalConfig:                node_manager.GlobalConfig{},
-	base.MethodGetOutstandingRewards:          node_manager.OutstandingRewards{},
-	base.MethodGetStakeInfo:                   node_manager.StakeInfo{},
-	base.MethodGetStakeStartingInfo:           node_manager.StakeStartingInfo{},
-	base.MethodGetTotalPool:                   node_manager.TotalPool{},
-	base.MethodGetUnlockingInfo:               node_manager.UnlockingInfo{},
-	base.MethodGetValidator:                   node_manager.Validator{},
-	base.MethodGetValidatorAccumulatedRewards: node_manager.ValidatorAccumulatedRewards{},
-	base.MethodGetValidatorOutstandingRewards: node_manager.ValidatorOutstandingRewards{},
-	base.MethodGetValidatorSnapshotRewards:    node_manager.ValidatorSnapshotRewards{},
+func getMethodResult(methodName string) (interface{}, error) {
+	switch methodName {
+	case base.MethodGetAccumulatedCommission:
+		return &node_manager.AccumulatedCommission{}, nil
+	case base.MethodGetAllValidators:
+		return &node_manager.AllValidators{}, nil
+	case base.MethodGetCommunityInfo:
+		return &node_manager.CommunityInfo{}, nil
+	case base.MethodGetCurrentEpochInfo:
+		return &node_manager.EpochInfo{}, nil
+	case base.MethodGetEpochInfo:
+		return &node_manager.EpochInfo{}, nil
+	case base.MethodGetGlobalConfig:
+		return &node_manager.GlobalConfig{}, nil
+	case base.MethodGetOutstandingRewards:
+		return &node_manager.OutstandingRewards{}, nil
+	case base.MethodGetStakeInfo:
+		return &node_manager.StakeInfo{}, nil
+	case base.MethodGetStakeStartingInfo:
+		return &node_manager.StakeStartingInfo{}, nil
+	case base.MethodGetTotalPool:
+		return &node_manager.TotalPool{}, nil
+	case base.MethodGetUnlockingInfo:
+		return &node_manager.UnlockingInfo{}, nil
+	case base.MethodGetValidator:
+		return &node_manager.Validator{}, nil
+	case base.MethodGetValidatorAccumulatedRewards:
+		return &node_manager.ValidatorAccumulatedRewards{}, nil
+	case base.MethodGetValidatorOutstandingRewards:
+		return &node_manager.ValidatorOutstandingRewards{}, nil
+	case base.MethodGetValidatorSnapshotRewards:
+		return &node_manager.ValidatorSnapshotRewards{}, nil
+	default:
+		err := fmt.Errorf("getMethodResult undefined method: %s", methodName)
+		return nil, err
+	}
 }

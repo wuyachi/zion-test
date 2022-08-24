@@ -36,7 +36,6 @@ func (g *GetAllValidatorsParser) ParseAssertion(input string) error {
 		assertion.AssertType = assertType
 		assertion.MethodName = base.MethodGetAllValidators
 		fieldValues := make([]FieldValue, 0)
-		assertion.FieldValues = fieldValues
 		for _, value := range values {
 			fieldValue := FieldValue{}
 			fieldValue.Field = field
@@ -48,7 +47,7 @@ func (g *GetAllValidatorsParser) ParseAssertion(input string) error {
 			fieldValue.Value = address
 			fieldValues = append(fieldValues, fieldValue)
 		}
-
+		assertion.FieldValues = fieldValues
 		g.rawAction.Assertions = append(g.rawAction.Assertions, assertion)
 	default:
 		return fmt.Errorf("undefined assertion field: %s", field)
