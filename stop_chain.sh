@@ -34,4 +34,5 @@ done
 
 pushd $CHAIN_DIR
 wizard stop
+$CHECK_BIN -case $CASE_INDEX
 popd

@@ -154,7 +154,7 @@ func (c *Chain) Stop(caseIndex int64) {
 		c.sdk = nil
 	}
 	err := runCmd(CONFIG.StopScript, c.bin, CONFIG.ChainDir, fmt.Sprint(c.index), fmt.Sprint(CONFIG.NodesPerChain), fmt.Sprint(c.port),
-		CONFIG.CheckBin, fmt.Sprint(caseIndex),
+		CONFIG.CheckCleanBin, fmt.Sprint(caseIndex),
 	)
 	if err != nil {
 		log.Fatal("Failed to stop chain", "index", c.index, "err", err)

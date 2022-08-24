@@ -320,7 +320,7 @@ pushd $CHAIN_DIR
 
 cat > check << EOF
 #!/bin/bash
-exec $CHECK_BIN $CHECK_PORT $CASE_INDEX
+exec $CHECK_BIN -zion http://127.0.0.1:$PORT_START -port $CHECK_PORT -case $CASE_INDEX
 EOF
 
 chmod +x check

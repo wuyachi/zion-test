@@ -9,7 +9,8 @@ var CONFIG *Config
 
 type Config struct {
 	Bin            string
-	CheckBin      string
+	CheckBin       string
+	CheckCleanBin  string
 	StartScript    string
 	StopScript     string
 	ChainDir       string
