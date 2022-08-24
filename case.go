@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/ethereum/go-ethereum/common/math"
 	"io/ioutil"
 	"math/big"
 	"net/http"
@@ -246,13 +245,16 @@ func (a *CheckBalance) CheckBalances(ctx *Context, addresses []common.Address) (
 	}
 	req := &CheckBalanceReq{Addresses: addressArr, EndHeight: a.StartAt()}
 	rsp := &CheckBalanceRsp{}
-	balances = make([]*big.Int, 0)
 	err = PostJsonFor(ctx.checkUrl, req, rsp)
 	if err != nil {
 		return
 	}
 	for _, amount := range rsp.Result.Amount {
-		balance := big.NewInt(int64(math.MustParseUint64(amount)))
+		balance, ok := new(big.Int).SetString(amount, 10)
+		if !ok {
+			err = fmt.Errorf("checkbalance convert balance from %s failed", amount)
+			return
+		}
 		balances = append(balances, balance)
 	}
 	return
