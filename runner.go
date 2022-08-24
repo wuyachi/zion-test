@@ -145,7 +145,7 @@ func (c *Chain) Start(caseIndex int64) {
 		log.Fatal("Failed to get chain height", "index", c.index, "err", err)
 	}
 	log.Info("Chain started", "index", c.index, "height", height)
-	c.checkUrl = fmt.Sprintf("http://localhost:%v", c.port+2000)
+	c.checkUrl = fmt.Sprintf("http://localhost:%v/api/v1/getrewards", c.port+2000)
 }
 
 func (c *Chain) Stop(caseIndex int64) {
