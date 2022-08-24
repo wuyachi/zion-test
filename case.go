@@ -214,6 +214,7 @@ func (a *CheckBalance) Run(ctx *Context) (err error) {
 		if err != nil {
 			return err
 		}
+		fmt.Printf("account=%s balance=%s, expectBalance=%s\n", address.String(), balance.String(), expectedBalances[i].String())
 		delta := new(big.Int).Abs(new(big.Int).Sub(balance, expectedBalances[i]))
 		if delta.Cmp(maxDelta) == 1 {
 			return fmt.Errorf("balance check failure, balance %s, expected %s, delta %s", balance, expectedBalances[i], delta)
