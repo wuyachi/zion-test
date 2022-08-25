@@ -136,7 +136,7 @@ func (c *Chain) Start(caseIndex int64) {
 	for i := 0; i < c.nodes; i++ {
 		urls = append(urls, fmt.Sprintf("http://127.0.0.1:%v", c.port+i))
 	}
-	c.sdk, err = eth.WithOptions(0, urls, time.Minute, 1)
+	c.sdk, err = eth.NewSDK(0, urls, time.Minute, 1)
 	if err != nil {
 		log.Fatal("Failed to create eth client", "index", c.index, "err", err)
 	}
