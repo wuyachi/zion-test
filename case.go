@@ -214,19 +214,21 @@ func (a *CheckBalance) Run(ctx *Context) (err error) {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("account=%s balance=%d\n", a.Address.String(), balance.Int64())
+	fmt.Printf("account=%s balance=%s\n", a.Address.String(), balance)
 
 	initialBalance := new(big.Int)
 	if b, ok := base.InitialBalanceMap[a.Address.String()]; ok {
 		initialBalance.SetString(b, 10)
 	}
-	fmt.Printf("account=%s initialBalance=%d\n", a.Address.String(), initialBalance.Int64())
+	fmt.Printf("account=%s initialBalance=%s\n", a.Address.String(), initialBalance)
+
+	fmt.Printf("account=%s netStake=%s\n", a.Address.String(), a.NetStake)
 
 	expectedRewards, err := a.getExpectedRewards(ctx, a.Address)
 	if err != nil {
 		return
 	}
-	fmt.Printf("account=%s expectedRewards=%d\n", a.Address.String(), expectedRewards.Int64())
+	fmt.Printf("account=%s expectedRewards=%s\n", a.Address.String(), expectedRewards)
 	gasFee, err := a.getGasFee(ctx, a.Address)
 	if err != nil {
 		return
@@ -253,15 +255,15 @@ func (a *CheckBalance) Run(ctx *Context) (err error) {
 		}
 		unArrivedRewards = new(big.Int).Add(unArrivedRewards, stakeWards.Rewards.BigInt())
 	}
-	fmt.Printf("account=%s unArrivedRewards=%d\n", a.Address.String(), unArrivedRewards.Int64())
+	fmt.Printf("account=%s unArrivedRewards=%s\n", a.Address.String(), unArrivedRewards)
 
 	arrivedRewards := new(big.Int).Sub(balance, initialBalance)
 	arrivedRewards.Add(arrivedRewards, gasFee)
 	arrivedRewards.Add(arrivedRewards, a.NetStake)
-	fmt.Printf("account=%s arrivedRewards=%d\n", a.Address.String(), arrivedRewards.Int64())
+	fmt.Printf("account=%s arrivedRewards=%s\n", a.Address.String(), arrivedRewards)
 
 	allRewards := new(big.Int).Add(unArrivedRewards, arrivedRewards)
-	fmt.Printf("account=%s allRewards=%d\n", a.Address.String(), allRewards.Int64())
+	fmt.Printf("account=%s allRewards=%s\n", a.Address.String(), allRewards)
 
 	maxDelta := new(big.Int).Mul(new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil), big.NewInt(1))
 

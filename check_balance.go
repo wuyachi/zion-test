@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"main/base"
 	"math/big"
 	"strings"
 )
@@ -47,6 +48,7 @@ func (c *CheckBalanceParser) ParseInput(input string) error {
 			checkBalancePara.NetStake = new(big.Int).Add(checkBalancePara.NetStake, val)
 		}
 	}
+	checkBalancePara.NetStake = checkBalancePara.NetStake.Mul(checkBalancePara.NetStake, base.ZionPrecision)
 	c.rawAction.CheckBalancePara = checkBalancePara
 
 	return nil
