@@ -233,26 +233,34 @@ func (a *CheckBalance) Run(ctx *Context) (err error) {
 	if err != nil {
 		return
 	}
+	fmt.Printf("account=%s gasFee=%s\n", a.Address.String(), gasFee)
 
 	unArrivedRewards := big.NewInt(0)
 	for _, validator := range a.Validators {
 		input := &node_manager.GetStakeRewardsParam{ConsensusAddress: validator, StakeAddress: a.Address}
 		data, err := input.Encode()
 		if err != nil {
+			err = fmt.Errorf("encode failed, err: %v", err)
 			return err
 		}
 		request := ethereum.CallMsg{To: &NODE_MANAGER_CONTRACT, Data: data}
 		output, err := ctx.nodes.Node().CallContract(context.Background(), request, big.NewInt(int64(a.StartAt())))
 		if err != nil {
+			err = fmt.Errorf("callContract failed, err: %v", err)
 			return err
 		}
 		unpacked, err := node_manager.ABI.Unpack(base.MethodGetStakeRewards, output)
+		if err != nil {
+			return fmt.Errorf("fail to unpack output: %v %x", err, output)
+		}
+
 		result := *abi.ConvertType(unpacked[0], new([]byte)).(*[]byte)
 		stakeWards := &node_manager.StakeRewards{}
 		err = rlp.DecodeBytes(result, stakeWards)
 		if err != nil {
 			return fmt.Errorf("fail to decode return value: %v %x", err, result)
 		}
+		fmt.Printf("stakeWards.Rewards%s\n", stakeWards.Rewards.BigInt())
 		unArrivedRewards = new(big.Int).Add(unArrivedRewards, stakeWards.Rewards.BigInt())
 	}
 	fmt.Printf("account=%s unArrivedRewards=%s\n", a.Address.String(), unArrivedRewards)
