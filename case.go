@@ -267,7 +267,7 @@ func (a *CheckBalance) Run(ctx *Context) (err error) {
 
 	arrivedRewards := new(big.Int).Sub(balance, initialBalance)
 	arrivedRewards.Add(arrivedRewards, gasFee)
-	arrivedRewards.Add(arrivedRewards, a.NetStake)
+	arrivedRewards.Sub(arrivedRewards, a.NetStake)
 	fmt.Printf("account=%s arrivedRewards=%s\n", a.Address.String(), arrivedRewards)
 
 	allRewards := new(big.Int).Add(unArrivedRewards, arrivedRewards)
