@@ -43,7 +43,7 @@ func (c *CheckBalanceParser) ParseInput(input string) error {
 			return fmt.Errorf("invalid format input[%s]", input)
 		}
 		if i == 0 {
-			checkBalancePara.NetStake = new(big.Int).Mul(checkBalancePara.NetStake, val)
+			checkBalancePara.NetStake = new(big.Int).Sub(checkBalancePara.NetStake, val)
 		} else {
 			checkBalancePara.NetStake = new(big.Int).Add(checkBalancePara.NetStake, val)
 		}
