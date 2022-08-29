@@ -276,6 +276,7 @@ func (a *CheckBalance) Run(ctx *Context) (err error) {
 	maxDelta := new(big.Int).Mul(new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil), big.NewInt(1))
 
 	delta := new(big.Int).Abs(new(big.Int).Sub(allRewards, expectedRewards))
+	fmt.Printf("account=%s delta=%s\n", a.Address.String(), delta)
 	if delta.Cmp(maxDelta) == 1 {
 		return fmt.Errorf("account: %s balance check failure, allRewards %s, expectedRewards %s, delta %s", a.Address, allRewards, expectedRewards, delta)
 	}
