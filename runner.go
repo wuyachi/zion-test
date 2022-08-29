@@ -91,7 +91,7 @@ func runCases(cs, res chan *Case) {
 		wg.Add(1)
 		go func(index int) {
 			defer wg.Done()
-			chain := &Chain{index, CONFIG.Bin, cs, res, CONFIG.NodesPerChain, CONFIG.NodesPortStart + index*100, nil, ""}
+			chain := &Chain{index, CONFIG.Bin, cs, res, CONFIG.NodesPerChain, CONFIG.NodesPortStart + index*100, nil, "", ""}
 			log.Info("Launching chain", "index", index)
 			chain.Run()
 		}(i)
@@ -100,13 +100,14 @@ func runCases(cs, res chan *Case) {
 }
 
 type Chain struct {
-	index    int
-	bin      string
-	cs, res  chan *Case
-	nodes    int
-	port     int
-	sdk      *eth.SDK
-	checkUrl string
+	index         int
+	bin           string
+	cs, res       chan *Case
+	nodes         int
+	port          int
+	sdk           *eth.SDK
+	getRewardsUrl string
+	getGasFeeUrl  string
 }
 
 func (c *Chain) Run() (err error) {
@@ -116,7 +117,7 @@ func (c *Chain) Run() (err error) {
 			break
 		}
 		c.Start(cs.index)
-		ctx := &Context{nodes: c.sdk, checkUrl: c.checkUrl}
+		ctx := &Context{nodes: c.sdk, getRewardsUrl: c.getRewardsUrl, getGasFeeUrl: c.getGasFeeUrl}
 		cs.err = cs.Run(ctx)
 		c.res <- cs
 		c.Stop(cs.index)
@@ -145,7 +146,8 @@ func (c *Chain) Start(caseIndex int64) {
 		log.Fatal("Failed to get chain height", "index", c.index, "err", err)
 	}
 	log.Info("Chain started", "index", c.index, "height", height)
-	c.checkUrl = fmt.Sprintf("http://localhost:%v/api/v1/getrewards", c.port+2000)
+	c.getRewardsUrl = fmt.Sprintf("http://localhost:%v/api/v1/getrewards", c.port+2000)
+	c.getGasFeeUrl = fmt.Sprintf("http://localhost:%v/api/v1/getgasfee", c.port+2000)
 }
 
 func (c *Chain) Stop(caseIndex int64) {
@@ -170,13 +172,13 @@ func runCmd(bin string, args ...string) (err error) {
 }
 
 func runChain(ctx *cli.Context) (err error) {
-	chain := &Chain{0, CONFIG.Bin, nil, nil, CONFIG.NodesPerChain, CONFIG.NodesPortStart, nil, ""}
+	chain := &Chain{0, CONFIG.Bin, nil, nil, CONFIG.NodesPerChain, CONFIG.NodesPortStart, nil, "", ""}
 	chain.Start(0)
 	return
 }
 
 func stopChain(ctx *cli.Context) (err error) {
-	chain := &Chain{0, CONFIG.Bin, nil, nil, CONFIG.NodesPerChain, CONFIG.NodesPortStart, nil, ""}
+	chain := &Chain{0, CONFIG.Bin, nil, nil, CONFIG.NodesPerChain, CONFIG.NodesPortStart, nil, "", ""}
 	chain.Stop(0)
 	return
 }

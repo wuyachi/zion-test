@@ -164,6 +164,9 @@ func getMethodResult(methodName string) (interface{}, error) {
 		return &node_manager.ValidatorOutstandingRewards{}, nil
 	case base.MethodGetValidatorSnapshotRewards:
 		return &node_manager.ValidatorSnapshotRewards{}, nil
+	case base.MethodGetStakeRewards:
+		return &node_manager.ValidatorOutstandingRewards{}, nil
+
 	default:
 		err := fmt.Errorf("getMethodResult undefined method: %s", methodName)
 		return nil, err

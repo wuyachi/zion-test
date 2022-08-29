@@ -215,7 +215,7 @@ func checkRow(row []string, fieldsIndex map[string]int) (err error) {
 	// check Assertion
 	assertion := row[fieldsIndex[_Assertion]]
 	if assertion != "nil" {
-		parts = strings.Split(assertion, ",")
+		parts = strings.Split(assertion, ";")
 		if len(parts) < 3 {
 			err = fmt.Errorf("invalid format [Assertion]: %s", assertion)
 			return

@@ -47,7 +47,7 @@ func (c *CreateValidatorParser) ParseInput(input string) error {
 	}
 	param.Commission = big.NewInt(commission)
 
-	param.InitStake = new(big.Int).Mul(big.NewInt(initStake), big.NewInt(base.ZION_PRECISION))
+	param.InitStake = new(big.Int).Mul(big.NewInt(initStake), base.ZionPrecision)
 	param.Desc = parts[5]
 
 	return nil
