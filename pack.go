@@ -40,8 +40,14 @@ type RawAction struct {
 	ShouldSucceed    bool
 	Assertions       []Assertion
 	Sender           HDAddress
-	BalanceAddresses []common.Address
+	CheckBalancePara CheckBalancePara
 	ActionBase
+}
+
+type CheckBalancePara struct {
+	Address    common.Address
+	Validators []common.Address
+	NetStake   *big.Int
 }
 
 func ReadOnly(methodName string) bool {
@@ -95,9 +101,10 @@ func (a *RawAction) Pack(nonce uint64) (Action, error) {
 	case CHECK_BALANCE:
 		return &CheckBalance{
 			ActionBase: a.ActionBase,
-			Addresses:  a.BalanceAddresses,
+			Address:    a.CheckBalancePara.Address,
+			Validators: a.CheckBalancePara.Validators,
+			NetStake:   a.CheckBalancePara.NetStake,
 		}, nil
-
 	case QUERY:
 		data, err := a.Input.Encode()
 		if err != nil {
