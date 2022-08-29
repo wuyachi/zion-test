@@ -347,7 +347,7 @@ func (a *CheckBalance) getExpectedRewards(ctx *Context, address common.Address) 
 func (a *CheckBalance) getGasFee(ctx *Context, address common.Address) (*big.Int, error) {
 	getGasFeeReq := &GetGasFeeReq{Addresses: []string{address.String()}, EndHeight: a.StartAt()}
 	getGasFeeRsp := &GetGasFeeRsp{}
-	err := PostJsonFor(ctx.getRewardsUrl, getGasFeeReq, getGasFeeRsp)
+	err := PostJsonFor(ctx.getGasFeeUrl, getGasFeeReq, getGasFeeRsp)
 	if err != nil || len(getGasFeeRsp.Result.Amount) == 0 {
 		return nil, fmt.Errorf("getGasFees post failed, err: %v", err)
 	}
