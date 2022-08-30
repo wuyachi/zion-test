@@ -276,22 +276,10 @@ func (a *CheckBalance) Run(ctx *Context) (err error) {
 	maxDelta := new(big.Int).Mul(new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil), big.NewInt(1))
 
 	delta := new(big.Int).Abs(new(big.Int).Sub(allRewards, expectedRewards))
-	fmt.Printf("account=%s delta=%s\n", a.Address.String(), delta)
+	fmt.Printf("actionIndex=%d account=%s delta=%s\n", a.Index(), a.Address.String(), delta)
 	if delta.Cmp(maxDelta) == 1 {
-		return fmt.Errorf("account: %s balance check failure, allRewards %s, expectedRewards %s, delta %s", a.Address, allRewards, expectedRewards, delta)
+		return fmt.Errorf("actionIndex=%d account: %s balance check failure, allRewards %s, expectedRewards %s, delta %s", a.Address.String(), a.Address, allRewards, expectedRewards, delta)
 	}
-
-	//for i, u := range a.UserValidators {
-	//	balance, err := ctx.nodes.Node().BalanceAt(context.Background(), u.User, big.NewInt(int64(a.StartAt())))
-	//	if err != nil {
-	//		return err
-	//	}
-	//	fmt.Printf("account=%s balance=%s, expectBalance=%s\n", address.String(), balance.String(), expectedBalances[i].String())
-	//	delta := new(big.Int).Abs(new(big.Int).Sub(balance, expectedBalances[i]))
-	//	if delta.Cmp(maxDelta) == 1 {
-	//		return fmt.Errorf("balance check failure, balance %s, expected %s, delta %s", balance, expectedBalances[i], delta)
-	//	}
-	//}
 	return
 }
 
