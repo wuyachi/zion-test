@@ -34,6 +34,8 @@ type ParseHandler interface {
 
 func NewParseHandler(rawAction *RawAction) (ParseHandler, error) {
 	switch rawAction.MethodName {
+	case "checkBalance":
+		return &CheckBalanceParser{rawAction: rawAction}, nil
 	case base.MethodCreateValidator:
 		return &CreateValidatorParser{rawAction: rawAction}, nil
 	case base.MethodWithdrawValidator:
@@ -58,9 +60,8 @@ func NewParseHandler(rawAction *RawAction) (ParseHandler, error) {
 		return &WithdrawParser{rawAction: rawAction}, nil
 	case base.MethodWithdrawStakeRewards:
 		return &WithdrawStakeRewardsParser{rawAction: rawAction}, nil
-	case "checkBalance":
-		return &CheckBalanceParser{rawAction: rawAction}, nil
-
+	case base.MethodGetStakeInfo:
+		return &GetStakeInfoParser{rawAction: rawAction}, nil
 	default:
 		err := fmt.Errorf("undefined method: %s", rawAction.MethodName)
 		return nil, err
