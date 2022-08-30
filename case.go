@@ -226,12 +226,12 @@ func (a *CheckBalance) Run(ctx *Context) (err error) {
 
 	fmt.Printf("account=%s netStake=%s\n", a.Address.String(), a.NetStake)
 
-	expectedRewards, err := a.getExpectedRewards(ctx, a.Address)
+	expectedRewards, err := a.getExpectedRewards(ctx, a.Address, checkHeight)
 	if err != nil {
 		return
 	}
 	fmt.Printf("account=%s expectedRewards=%s\n", a.Address.String(), expectedRewards)
-	gasFee, err := a.getGasFee(ctx, a.Address)
+	gasFee, err := a.getGasFee(ctx, a.Address, checkHeight)
 	if err != nil {
 		return
 	}
@@ -321,8 +321,8 @@ type GetGasFeeRsp struct {
 	} `json:"result"`
 }
 
-func (a *CheckBalance) getExpectedRewards(ctx *Context, address common.Address) (*big.Int, error) {
-	getRewardsReq := &GetRewardsReq{Addresses: []string{address.String()}, EndHeight: a.StartAt()}
+func (a *CheckBalance) getExpectedRewards(ctx *Context, address common.Address, height uint64) (*big.Int, error) {
+	getRewardsReq := &GetRewardsReq{Addresses: []string{address.String()}, EndHeight: height}
 	getRewardsRsp := &GetRewardsRsp{}
 	err := PostJsonFor(ctx.getRewardsUrl, getRewardsReq, getRewardsRsp)
 	if err != nil || len(getRewardsRsp.Result.Amount) == 0 {
@@ -335,8 +335,8 @@ func (a *CheckBalance) getExpectedRewards(ctx *Context, address common.Address) 
 	return expectedRewards, nil
 }
 
-func (a *CheckBalance) getGasFee(ctx *Context, address common.Address) (*big.Int, error) {
-	getGasFeeReq := &GetGasFeeReq{Addresses: []string{address.String()}, EndHeight: a.StartAt()}
+func (a *CheckBalance) getGasFee(ctx *Context, address common.Address, height uint64) (*big.Int, error) {
+	getGasFeeReq := &GetGasFeeReq{Addresses: []string{address.String()}, EndHeight: height}
 	getGasFeeRsp := &GetGasFeeRsp{}
 	err := PostJsonFor(ctx.getGasFeeUrl, getGasFeeReq, getGasFeeRsp)
 	if err != nil || len(getGasFeeRsp.Result.Amount) == 0 {
