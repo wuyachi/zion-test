@@ -210,6 +210,7 @@ type CheckBalance struct {
 }
 
 func (a *CheckBalance) Run(ctx *Context) (err error) {
+	fmt.Println("action ", a.Index(), "check balance at height ", a.StartAt())
 	balance, err := ctx.nodes.Node().BalanceAt(context.Background(), a.Address, big.NewInt(int64(a.StartAt())))
 	if err != nil {
 		return err
