@@ -89,6 +89,7 @@ func (c *Case) Run(ctx *Context) (err error) {
 	sort.Slice(c.plan, func(i, j int) bool { return c.plan[i].start < c.plan[j].start })
 
 	type result struct {
+		note  string
 		err   error
 		index int
 	}
@@ -99,7 +100,8 @@ func (c *Case) Run(ctx *Context) (err error) {
 			go func(a Action) {
 				ctx.Till(a.StartAt())
 				log.Info("Running case action", "case_index", c.index, "action_index", a.Index())
-				res <- result{a.Run(ctx), a.Index()}
+				note, e := a.Run(ctx)
+				res <- result{note, e, a.Index()}
 			}(action)
 		}
 	}
@@ -108,6 +110,7 @@ func (c *Case) Run(ctx *Context) (err error) {
 		log.Info("Waiting case actions result", "case_index", c.index, "progress", j+1, "total", len(c.actions))
 		r := <-res
 		c.actions[r.index].SetError(r.err)
+		c.actions[r.index].SetNote(r.note)
 		if r.err != nil {
 			err = fmt.Errorf("action failure, err: %v, action_index: %v", r.err, r.index)
 			log.Error("Run case action failed", "case", c.index, "action", r.index, "err", err)
@@ -122,13 +125,15 @@ type ActionItem struct {
 }
 
 type Action interface {
-	Run(*Context) error
+	Run(*Context) (string, error)
 	StartAt() uint64
 	Before() uint64
 	SetIndex(int)
 	Index() int
 	Error() error
 	SetError(err error)
+	Note() string
+	SetNote(note string)
 }
 
 type ActionBase struct {
@@ -136,6 +141,7 @@ type ActionBase struct {
 	Block        uint64
 	ShouldBefore uint64
 	index        int
+	note         string
 	err          error
 }
 
@@ -143,10 +149,12 @@ func (a *ActionBase) StartAt() uint64 { return a.Block + a.Epoch*uint64(CONFIG.B
 func (a *ActionBase) Before() uint64 {
 	return a.ShouldBefore + a.Epoch*uint64(CONFIG.BlocksPerEpoch)
 }
-func (a *ActionBase) SetIndex(index int) { a.index = index }
-func (a *ActionBase) Index() int         { return a.index }
-func (a *ActionBase) SetError(err error) { a.err = err }
-func (a *ActionBase) Error() error       { return a.err }
+func (a *ActionBase) SetIndex(index int)  { a.index = index }
+func (a *ActionBase) Index() int          { return a.index }
+func (a *ActionBase) SetError(err error)  { a.err = err }
+func (a *ActionBase) Error() error        { return a.err }
+func (a *ActionBase) SetNote(note string) { a.note = note }
+func (a *ActionBase) Note() string        { return a.note }
 
 type SendTx struct {
 	ActionBase
@@ -154,7 +162,7 @@ type SendTx struct {
 	ShouldSucceed bool
 }
 
-func (a *SendTx) Run(ctx *Context) (err error) {
+func (a *SendTx) Run(ctx *Context) (note string, err error) {
 	err = ctx.nodes.Node().SendTransaction(context.Background(), a.Tx)
 	if err != nil {
 		return
@@ -165,26 +173,26 @@ func (a *SendTx) Run(ctx *Context) (err error) {
 		time.Sleep(time.Second * 2)
 		height, _, pending, err := ctx.nodes.Node().Confirm(a.Tx.Hash(), 1, 10)
 		if err != nil {
-			return err
+			return "", err
 		}
 
 		if height > 0 {
 			if height <= a.Before() {
 				rec, err := ctx.nodes.Node().TransactionReceipt(context.Background(), a.Tx.Hash())
 				if err != nil {
-					return err
+					return "", err
 				}
 				if (rec.Status == 1) == a.ShouldSucceed {
-					return nil
+					return "", nil
 				}
-				return fmt.Errorf("transaction status error, status %v, wanted %v", rec.Status == 1, a.ShouldSucceed)
+				return "", fmt.Errorf("transaction status error, status %v, wanted %v", rec.Status == 1, a.ShouldSucceed)
 			}
-			return fmt.Errorf("tx packed too late, height %v, expected before %v", height, a.Before())
+			return "", fmt.Errorf("tx packed too late, height %v, expected before %v", height, a.Before())
 		} else if !pending {
-			return fmt.Errorf("possible tx lost %s", a.Tx.Hash())
+			return "", fmt.Errorf("possible tx lost %s", a.Tx.Hash())
 		}
 	}
-	return nil
+	return "", nil
 }
 
 type Query struct {
@@ -193,7 +201,7 @@ type Query struct {
 	Assertions []Assertion
 }
 
-func (a *Query) Run(ctx *Context) (err error) {
+func (a *Query) Run(ctx *Context) (note string, err error) {
 	output, err := ctx.nodes.Node().CallContract(context.Background(), a.Request, big.NewInt(int64(a.StartAt())))
 	if err != nil {
 		return
@@ -209,12 +217,12 @@ type CheckBalance struct {
 	NetStake   *big.Int
 }
 
-func (a *CheckBalance) Run(ctx *Context) (err error) {
+func (a *CheckBalance) Run(ctx *Context) (note string, err error) {
 	checkHeight := a.StartAt() - 10
 	fmt.Println("action ", a.Index(), "check balance at height ", checkHeight)
 	balance, err := ctx.nodes.Node().BalanceAt(context.Background(), a.Address, big.NewInt(int64(checkHeight)))
 	if err != nil {
-		return err
+		return "", err
 	}
 	fmt.Printf("account=%s balance=%s\n", a.Address.String(), balance)
 
@@ -243,24 +251,24 @@ func (a *CheckBalance) Run(ctx *Context) (err error) {
 		data, err := input.Encode()
 		if err != nil {
 			err = fmt.Errorf("encode failed, err: %v", err)
-			return err
+			return "", err
 		}
 		request := ethereum.CallMsg{To: &NODE_MANAGER_CONTRACT, Data: data}
 		output, err := ctx.nodes.Node().CallContract(context.Background(), request, big.NewInt(int64(checkHeight)))
 		if err != nil {
 			err = fmt.Errorf("callContract failed, err: %v", err)
-			return err
+			return "", err
 		}
 		unpacked, err := node_manager.ABI.Unpack(base.MethodGetStakeRewards, output)
 		if err != nil {
-			return fmt.Errorf("fail to unpack output: %v %x", err, output)
+			return "", fmt.Errorf("fail to unpack output: %v %x", err, output)
 		}
 
 		result := *abi.ConvertType(unpacked[0], new([]byte)).(*[]byte)
 		stakeWards := &node_manager.StakeRewards{}
 		err = rlp.DecodeBytes(result, stakeWards)
 		if err != nil {
-			return fmt.Errorf("fail to decode return value: %v %x", err, result)
+			return "", fmt.Errorf("fail to decode return value: %v %x", err, result)
 		}
 		fmt.Printf("stakeWards.Rewards%s\n", stakeWards.Rewards.BigInt())
 		unArrivedRewards = new(big.Int).Add(unArrivedRewards, stakeWards.Rewards.BigInt())
@@ -278,15 +286,12 @@ func (a *CheckBalance) Run(ctx *Context) (err error) {
 	maxDelta := new(big.Int).Mul(new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil), big.NewInt(1))
 
 	delta := new(big.Int).Abs(new(big.Int).Sub(allRewards, expectedRewards))
+	note = fmt.Sprintf("delta %s", delta.String())
 	fmt.Printf("actionIndex=%d account=%s delta=%s\n", a.Index(), a.Address.String(), delta)
 	if delta.Cmp(maxDelta) == 1 {
-		return fmt.Errorf("actionIndex=%d account: %s balance check failure, allRewards %s, expectedRewards %s, delta %s", a.Address.String(), a.Address, allRewards, expectedRewards, delta)
+		return "", fmt.Errorf("actionIndex=%d account: %s balance check failure, allRewards %s, expectedRewards %s, delta %s", a.Index(), a.Address, allRewards, expectedRewards, delta)
 	}
 	return
-}
-
-func (a *CheckBalance) getUnDistributeRewards() {
-
 }
 
 type GetRewardsReq struct {
