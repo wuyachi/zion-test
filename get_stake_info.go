@@ -62,6 +62,7 @@ func (g *GetStakeInfoParser) ParseAssertion(input string) error {
 		if !ok {
 			return fmt.Errorf("invalid assertion format: %s", parts[2])
 		}
+		amount = amount.Mul(amount, base.ZionPrecision)
 		amountDec := node_manager.NewDecFromBigInt(amount)
 
 		fieldValue := FieldValue{}
