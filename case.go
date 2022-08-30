@@ -210,8 +210,9 @@ type CheckBalance struct {
 }
 
 func (a *CheckBalance) Run(ctx *Context) (err error) {
-	fmt.Println("action ", a.Index(), "check balance at height ", a.StartAt())
-	balance, err := ctx.nodes.Node().BalanceAt(context.Background(), a.Address, big.NewInt(int64(a.StartAt())))
+	checkHeight := a.StartAt() - 10
+	fmt.Println("action ", a.Index(), "check balance at height ", checkHeight)
+	balance, err := ctx.nodes.Node().BalanceAt(context.Background(), a.Address, big.NewInt(int64(checkHeight)))
 	if err != nil {
 		return err
 	}
@@ -245,7 +246,7 @@ func (a *CheckBalance) Run(ctx *Context) (err error) {
 			return err
 		}
 		request := ethereum.CallMsg{To: &NODE_MANAGER_CONTRACT, Data: data}
-		output, err := ctx.nodes.Node().CallContract(context.Background(), request, big.NewInt(int64(a.StartAt())))
+		output, err := ctx.nodes.Node().CallContract(context.Background(), request, big.NewInt(int64(checkHeight)))
 		if err != nil {
 			err = fmt.Errorf("callContract failed, err: %v", err)
 			return err

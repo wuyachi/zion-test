@@ -157,6 +157,9 @@ func createRowAction(row []string, fieldsIndex map[string]int) (action *RawActio
 	if err != nil {
 		return
 	}
+	if action.MethodName == "checkBalance" {
+		action.Block += 10 // delay 10 blocks
+	}
 
 	parseHandler, err := NewParseHandler(action)
 	if err != nil {
