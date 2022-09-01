@@ -41,9 +41,12 @@ func dumpResult(cases []*Case) (err error) {
 			excel.SetCellValue(fmt.Sprintf("case%d", c.index), "M"+strconv.Itoa(i+2), "success")
 		} else {
 			excel.SetCellValue(fmt.Sprintf("case%d", c.index), "M"+strconv.Itoa(i+2), c.err)
-			for j, action := range c.actions {
+		}
+		for j, action := range c.actions {
+			if action.Error() != nil {
 				excel.SetCellValue(fmt.Sprintf("case%d", c.index), "L"+strconv.Itoa(j+2), action.Error())
-				excel.SetCellValue(fmt.Sprintf("case%d", c.index), "N"+strconv.Itoa(j+2), action.Note())
+			} else {
+				excel.SetCellValue(fmt.Sprintf("case%d", c.index), "L"+strconv.Itoa(j+2), action.Note())
 			}
 		}
 	}

@@ -289,7 +289,7 @@ func (a *CheckBalance) Run(ctx *Context) (note string, err error) {
 	note = fmt.Sprintf("delta %s", delta.String())
 	fmt.Printf("actionIndex=%d account=%s delta=%s\n", a.Index(), a.Address.String(), delta)
 	if delta.Cmp(maxDelta) == 1 {
-		return "", fmt.Errorf("actionIndex=%d account: %s balance check failure, allRewards %s, expectedRewards %s, delta %s", a.Address.String(), a.Address, allRewards, expectedRewards, delta)
+		return "", fmt.Errorf("actionIndex=%d account: %s balance check failure, allRewards %s, expectedRewards %s, delta %s", a.Index(), a.Address, allRewards, expectedRewards, delta)
 	}
 	return
 }
