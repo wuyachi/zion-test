@@ -256,8 +256,8 @@ func (a *CheckBalance) Run(ctx *Context) (note string, err error) {
 		request := ethereum.CallMsg{To: &NODE_MANAGER_CONTRACT, Data: data}
 		output, err := ctx.nodes.Node().CallContract(context.Background(), request, big.NewInt(int64(checkHeight)))
 		if err != nil {
-			err = fmt.Errorf("callContract failed, err: %v", err)
-			return "", err
+			log.Error("callContract failed", "err", err)
+			continue
 		}
 		unpacked, err := node_manager.ABI.Unpack(base.MethodGetStakeRewards, output)
 		if err != nil {
