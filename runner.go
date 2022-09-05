@@ -41,8 +41,12 @@ func dumpResult(cases []*Case) (err error) {
 			excel.SetCellValue(fmt.Sprintf("case%d", c.index), "M"+strconv.Itoa(i+2), "success")
 		} else {
 			excel.SetCellValue(fmt.Sprintf("case%d", c.index), "M"+strconv.Itoa(i+2), c.err)
-			for j, action := range c.actions {
+		}
+		for j, action := range c.actions {
+			if action.Error() != nil {
 				excel.SetCellValue(fmt.Sprintf("case%d", c.index), "L"+strconv.Itoa(j+2), action.Error())
+			} else {
+				excel.SetCellValue(fmt.Sprintf("case%d", c.index), "L"+strconv.Itoa(j+2), action.Note())
 			}
 		}
 	}
@@ -91,7 +95,7 @@ func runCases(cs, res chan *Case) {
 		wg.Add(1)
 		go func(index int) {
 			defer wg.Done()
-			chain := &Chain{index, CONFIG.Bin, cs, res, CONFIG.NodesPerChain, CONFIG.NodesPortStart + index*100, nil, ""}
+			chain := &Chain{index, CONFIG.Bin, cs, res, CONFIG.NodesPerChain, CONFIG.NodesPortStart + index*100, nil, "", ""}
 			log.Info("Launching chain", "index", index)
 			chain.Run()
 		}(i)
@@ -100,13 +104,14 @@ func runCases(cs, res chan *Case) {
 }
 
 type Chain struct {
-	index    int
-	bin      string
-	cs, res  chan *Case
-	nodes    int
-	port     int
-	sdk      *eth.SDK
-	checkUrl string
+	index         int
+	bin           string
+	cs, res       chan *Case
+	nodes         int
+	port          int
+	sdk           *eth.SDK
+	getRewardsUrl string
+	getGasFeeUrl  string
 }
 
 func (c *Chain) Run() (err error) {
@@ -116,7 +121,7 @@ func (c *Chain) Run() (err error) {
 			break
 		}
 		c.Start(cs.index)
-		ctx := &Context{nodes: c.sdk, checkUrl: c.checkUrl}
+		ctx := &Context{nodes: c.sdk, getRewardsUrl: c.getRewardsUrl, getGasFeeUrl: c.getGasFeeUrl}
 		cs.err = cs.Run(ctx)
 		c.res <- cs
 		c.Stop(cs.index)
@@ -126,7 +131,7 @@ func (c *Chain) Run() (err error) {
 
 func (c *Chain) Start(caseIndex int64) {
 	err := runCmd(CONFIG.StartScript, c.bin, CONFIG.ChainDir, fmt.Sprint(c.index), fmt.Sprint(CONFIG.NodesPerChain), fmt.Sprint(c.port),
-		CONFIG.CheckBin, fmt.Sprint(caseIndex),
+		CONFIG.CheckBin, CONFIG.CheckCleanBin, fmt.Sprint(caseIndex),
 	)
 	if err != nil {
 		log.Fatal("Failed to start chain", "index", c.index, "err", err)
@@ -136,7 +141,7 @@ func (c *Chain) Start(caseIndex int64) {
 	for i := 0; i < c.nodes; i++ {
 		urls = append(urls, fmt.Sprintf("http://127.0.0.1:%v", c.port+i))
 	}
-	c.sdk, err = eth.WithOptions(0, urls, time.Minute, 1)
+	c.sdk, err = eth.NewSDK(0, urls, time.Minute, 1)
 	if err != nil {
 		log.Fatal("Failed to create eth client", "index", c.index, "err", err)
 	}
@@ -145,7 +150,8 @@ func (c *Chain) Start(caseIndex int64) {
 		log.Fatal("Failed to get chain height", "index", c.index, "err", err)
 	}
 	log.Info("Chain started", "index", c.index, "height", height)
-	c.checkUrl = fmt.Sprintf("http://localhost:%v/api/v1/getrewards", c.port+2000)
+	c.getRewardsUrl = fmt.Sprintf("http://localhost:%v/api/v1/getrewards", c.port+2000)
+	c.getGasFeeUrl = fmt.Sprintf("http://localhost:%v/api/v1/getgasfee", c.port+2000)
 }
 
 func (c *Chain) Stop(caseIndex int64) {
@@ -154,7 +160,7 @@ func (c *Chain) Stop(caseIndex int64) {
 		c.sdk = nil
 	}
 	err := runCmd(CONFIG.StopScript, c.bin, CONFIG.ChainDir, fmt.Sprint(c.index), fmt.Sprint(CONFIG.NodesPerChain), fmt.Sprint(c.port),
-		CONFIG.CheckCleanBin, fmt.Sprint(caseIndex),
+		fmt.Sprint(caseIndex),
 	)
 	if err != nil {
 		log.Fatal("Failed to stop chain", "index", c.index, "err", err)
@@ -170,13 +176,13 @@ func runCmd(bin string, args ...string) (err error) {
 }
 
 func runChain(ctx *cli.Context) (err error) {
-	chain := &Chain{0, CONFIG.Bin, nil, nil, CONFIG.NodesPerChain, CONFIG.NodesPortStart, nil, ""}
+	chain := &Chain{0, CONFIG.Bin, nil, nil, CONFIG.NodesPerChain, CONFIG.NodesPortStart, nil, "", ""}
 	chain.Start(0)
 	return
 }
 
 func stopChain(ctx *cli.Context) (err error) {
-	chain := &Chain{0, CONFIG.Bin, nil, nil, CONFIG.NodesPerChain, CONFIG.NodesPortStart, nil, ""}
+	chain := &Chain{0, CONFIG.Bin, nil, nil, CONFIG.NodesPerChain, CONFIG.NodesPortStart, nil, "", ""}
 	chain.Stop(0)
 	return
 }

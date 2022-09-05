@@ -34,6 +34,8 @@ type ParseHandler interface {
 
 func NewParseHandler(rawAction *RawAction) (ParseHandler, error) {
 	switch rawAction.MethodName {
+	case "checkBalance":
+		return &CheckBalanceParser{rawAction: rawAction}, nil
 	case base.MethodCreateValidator:
 		return &CreateValidatorParser{rawAction: rawAction}, nil
 	case base.MethodWithdrawValidator:
@@ -46,10 +48,6 @@ func NewParseHandler(rawAction *RawAction) (ParseHandler, error) {
 		return &UpdateCommissionParser{rawAction: rawAction}, nil
 	case base.MethodWithdrawCommission:
 		return &WithdrawCommissionParser{rawAction: rawAction}, nil
-	case base.MethodGetCurrentEpochInfo:
-		return &GetCurrentEpochInfoParser{rawAction: rawAction}, nil
-	case base.MethodGetAllValidators:
-		return &GetAllValidatorsParser{rawAction: rawAction}, nil
 	case base.MethodStake:
 		return &StakeParser{rawAction: rawAction}, nil
 	case base.MethodUnStake:
@@ -58,9 +56,14 @@ func NewParseHandler(rawAction *RawAction) (ParseHandler, error) {
 		return &WithdrawParser{rawAction: rawAction}, nil
 	case base.MethodWithdrawStakeRewards:
 		return &WithdrawStakeRewardsParser{rawAction: rawAction}, nil
-	case "checkBalance":
-		return &CheckBalanceParser{rawAction: rawAction}, nil
-
+	case base.MethodGetCurrentEpochInfo:
+		return &GetCurrentEpochInfoParser{rawAction: rawAction}, nil
+	case base.MethodGetAllValidators:
+		return &GetAllValidatorsParser{rawAction: rawAction}, nil
+	case base.MethodGetStakeInfo:
+		return &GetStakeInfoParser{rawAction: rawAction}, nil
+	case base.MethodGetStakeStartingInfo:
+		return &GetStakeStartingInfoParser{rawAction: rawAction}, nil
 	default:
 		err := fmt.Errorf("undefined method: %s", rawAction.MethodName)
 		return nil, err
@@ -156,6 +159,9 @@ func createRowAction(row []string, fieldsIndex map[string]int) (action *RawActio
 	if err != nil {
 		return
 	}
+	if action.MethodName == "checkBalance" {
+		action.Block += 10 // delay 10 blocks
+	}
 
 	parseHandler, err := NewParseHandler(action)
 	if err != nil {
@@ -215,7 +221,7 @@ func checkRow(row []string, fieldsIndex map[string]int) (err error) {
 	// check Assertion
 	assertion := row[fieldsIndex[_Assertion]]
 	if assertion != "nil" {
-		parts = strings.Split(assertion, ",")
+		parts = strings.Split(assertion, ";")
 		if len(parts) < 3 {
 			err = fmt.Errorf("invalid format [Assertion]: %s", assertion)
 			return

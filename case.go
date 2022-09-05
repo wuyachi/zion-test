@@ -5,7 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/rlp"
 	"io/ioutil"
+	"main/base"
+	"main/node_manager"
 	"math/big"
 	"net/http"
 	"sort"
@@ -22,8 +26,9 @@ import (
 type Context struct {
 	nodes *eth.SDK
 	sync.RWMutex
-	height   uint64
-	checkUrl string
+	height        uint64
+	getRewardsUrl string
+	getGasFeeUrl  string
 }
 
 func (ctx *Context) Till(height uint64) {
@@ -84,6 +89,7 @@ func (c *Case) Run(ctx *Context) (err error) {
 	sort.Slice(c.plan, func(i, j int) bool { return c.plan[i].start < c.plan[j].start })
 
 	type result struct {
+		note  string
 		err   error
 		index int
 	}
@@ -94,7 +100,8 @@ func (c *Case) Run(ctx *Context) (err error) {
 			go func(a Action) {
 				ctx.Till(a.StartAt())
 				log.Info("Running case action", "case_index", c.index, "action_index", a.Index())
-				res <- result{a.Run(ctx), a.Index()}
+				note, e := a.Run(ctx)
+				res <- result{note, e, a.Index()}
 			}(action)
 		}
 	}
@@ -103,6 +110,7 @@ func (c *Case) Run(ctx *Context) (err error) {
 		log.Info("Waiting case actions result", "case_index", c.index, "progress", j+1, "total", len(c.actions))
 		r := <-res
 		c.actions[r.index].SetError(r.err)
+		c.actions[r.index].SetNote(r.note)
 		if r.err != nil {
 			err = fmt.Errorf("action failure, err: %v, action_index: %v", r.err, r.index)
 			log.Error("Run case action failed", "case", c.index, "action", r.index, "err", err)
@@ -117,13 +125,15 @@ type ActionItem struct {
 }
 
 type Action interface {
-	Run(*Context) error
+	Run(*Context) (string, error)
 	StartAt() uint64
 	Before() uint64
 	SetIndex(int)
 	Index() int
 	Error() error
 	SetError(err error)
+	Note() string
+	SetNote(note string)
 }
 
 type ActionBase struct {
@@ -131,6 +141,7 @@ type ActionBase struct {
 	Block        uint64
 	ShouldBefore uint64
 	index        int
+	note         string
 	err          error
 }
 
@@ -138,10 +149,12 @@ func (a *ActionBase) StartAt() uint64 { return a.Block + a.Epoch*uint64(CONFIG.B
 func (a *ActionBase) Before() uint64 {
 	return a.ShouldBefore + a.Epoch*uint64(CONFIG.BlocksPerEpoch)
 }
-func (a *ActionBase) SetIndex(index int) { a.index = index }
-func (a *ActionBase) Index() int         { return a.index }
-func (a *ActionBase) SetError(err error) { a.err = err }
-func (a *ActionBase) Error() error       { return a.err }
+func (a *ActionBase) SetIndex(index int)  { a.index = index }
+func (a *ActionBase) Index() int          { return a.index }
+func (a *ActionBase) SetError(err error)  { a.err = err }
+func (a *ActionBase) Error() error        { return a.err }
+func (a *ActionBase) SetNote(note string) { a.note = note }
+func (a *ActionBase) Note() string        { return a.note }
 
 type SendTx struct {
 	ActionBase
@@ -149,7 +162,7 @@ type SendTx struct {
 	ShouldSucceed bool
 }
 
-func (a *SendTx) Run(ctx *Context) (err error) {
+func (a *SendTx) Run(ctx *Context) (note string, err error) {
 	err = ctx.nodes.Node().SendTransaction(context.Background(), a.Tx)
 	if err != nil {
 		return
@@ -160,26 +173,26 @@ func (a *SendTx) Run(ctx *Context) (err error) {
 		time.Sleep(time.Second * 2)
 		height, _, pending, err := ctx.nodes.Node().Confirm(a.Tx.Hash(), 1, 10)
 		if err != nil {
-			return err
+			return "", err
 		}
 
 		if height > 0 {
 			if height <= a.Before() {
 				rec, err := ctx.nodes.Node().TransactionReceipt(context.Background(), a.Tx.Hash())
 				if err != nil {
-					return err
+					return "", err
 				}
 				if (rec.Status == 1) == a.ShouldSucceed {
-					return nil
+					return "", nil
 				}
-				return fmt.Errorf("transaction status error, status %v, wanted %v", rec.Status == 1, a.ShouldSucceed)
+				return "", fmt.Errorf("transaction status error, status %v, wanted %v", rec.Status == 1, a.ShouldSucceed)
 			}
-			return fmt.Errorf("tx packed too late, height %v, expected before %v", height, a.Before())
+			return "", fmt.Errorf("tx packed too late, height %v, expected before %v", height, a.Before())
 		} else if !pending {
-			return fmt.Errorf("possible tx lost %s", a.Tx.Hash())
+			return "", fmt.Errorf("possible tx lost %s", a.Tx.Hash())
 		}
 	}
-	return nil
+	return "", nil
 }
 
 type Query struct {
@@ -188,7 +201,7 @@ type Query struct {
 	Assertions []Assertion
 }
 
-func (a *Query) Run(ctx *Context) (err error) {
+func (a *Query) Run(ctx *Context) (note string, err error) {
 	output, err := ctx.nodes.Node().CallContract(context.Background(), a.Request, big.NewInt(int64(a.StartAt())))
 	if err != nil {
 		return
@@ -199,36 +212,95 @@ func (a *Query) Run(ctx *Context) (err error) {
 
 type CheckBalance struct {
 	ActionBase
-	Addresses []common.Address
+	Address    common.Address
+	Validators []common.Address
+	NetStake   *big.Int
 }
 
-func (a *CheckBalance) Run(ctx *Context) (err error) {
-	expectedBalances, err := a.CheckBalances(ctx, a.Addresses)
+func (a *CheckBalance) Run(ctx *Context) (note string, err error) {
+	checkHeight := a.StartAt() - 10
+	fmt.Println("action ", a.Index(), "check balance at height ", checkHeight)
+	balance, err := ctx.nodes.Node().BalanceAt(context.Background(), a.Address, big.NewInt(int64(checkHeight)))
+	if err != nil {
+		return "", err
+	}
+	fmt.Printf("account=%s balance=%s\n", a.Address.String(), balance)
+
+	initialBalance := new(big.Int)
+	if b, ok := base.InitialBalanceMap[a.Address.String()]; ok {
+		initialBalance.SetString(b, 10)
+	}
+	fmt.Printf("account=%s initialBalance=%s\n", a.Address.String(), initialBalance)
+
+	fmt.Printf("account=%s netStake=%s\n", a.Address.String(), a.NetStake)
+
+	expectedRewards, err := a.getExpectedRewards(ctx, a.Address, checkHeight)
 	if err != nil {
 		return
 	}
+	fmt.Printf("account=%s expectedRewards=%s\n", a.Address.String(), expectedRewards)
+	gasFee, err := a.getGasFee(ctx, a.Address, checkHeight)
+	if err != nil {
+		return
+	}
+	fmt.Printf("account=%s gasFee=%s\n", a.Address.String(), gasFee)
+
+	unArrivedRewards := big.NewInt(0)
+	for _, validator := range a.Validators {
+		input := &node_manager.GetStakeRewardsParam{ConsensusAddress: validator, StakeAddress: a.Address}
+		data, err := input.Encode()
+		if err != nil {
+			err = fmt.Errorf("encode failed, err: %v", err)
+			return "", err
+		}
+		request := ethereum.CallMsg{To: &NODE_MANAGER_CONTRACT, Data: data}
+		output, err := ctx.nodes.Node().CallContract(context.Background(), request, big.NewInt(int64(checkHeight)))
+		if err != nil {
+			log.Error("callContract failed", "err", err)
+			continue
+		}
+		unpacked, err := node_manager.ABI.Unpack(base.MethodGetStakeRewards, output)
+		if err != nil {
+			return "", fmt.Errorf("fail to unpack output: %v %x", err, output)
+		}
+
+		result := *abi.ConvertType(unpacked[0], new([]byte)).(*[]byte)
+		stakeWards := &node_manager.StakeRewards{}
+		err = rlp.DecodeBytes(result, stakeWards)
+		if err != nil {
+			return "", fmt.Errorf("fail to decode return value: %v %x", err, result)
+		}
+		fmt.Printf("stakeWards.Rewards%s\n", stakeWards.Rewards.BigInt())
+		unArrivedRewards = new(big.Int).Add(unArrivedRewards, stakeWards.Rewards.BigInt())
+	}
+	fmt.Printf("account=%s unArrivedRewards=%s\n", a.Address.String(), unArrivedRewards)
+
+	arrivedRewards := new(big.Int).Sub(balance, initialBalance)
+	arrivedRewards.Add(arrivedRewards, gasFee)
+	arrivedRewards.Sub(arrivedRewards, a.NetStake)
+	fmt.Printf("account=%s arrivedRewards=%s\n", a.Address.String(), arrivedRewards)
+
+	allRewards := new(big.Int).Add(unArrivedRewards, arrivedRewards)
+	fmt.Printf("account=%s allRewards=%s\n", a.Address.String(), allRewards)
+
 	maxDelta := new(big.Int).Mul(new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil), big.NewInt(1))
 
-	for i, address := range a.Addresses {
-		balance, err := ctx.nodes.Node().BalanceAt(context.Background(), address, big.NewInt(int64(a.StartAt())))
-		if err != nil {
-			return err
-		}
-		delta := new(big.Int).Abs(new(big.Int).Sub(balance, expectedBalances[i]))
-		if delta.Cmp(maxDelta) == 1 {
-			return fmt.Errorf("balance check failure, balance %s, expected %s, delta %s", balance, expectedBalances[i], delta)
-		}
+	delta := new(big.Int).Abs(new(big.Int).Sub(allRewards, expectedRewards))
+	note = fmt.Sprintf("delta %s", delta.String())
+	fmt.Printf("actionIndex=%d account=%s delta=%s\n", a.Index(), a.Address.String(), delta)
+	if delta.Cmp(maxDelta) == 1 {
+		return "", fmt.Errorf("actionIndex=%d account: %s balance check failure, allRewards %s, expectedRewards %s, delta %s", a.Index(), a.Address, allRewards, expectedRewards, delta)
 	}
 	return
 }
 
-type CheckBalanceReq struct {
+type GetRewardsReq struct {
 	Id        string   `json:"Id"`
 	Addresses []string `json:"Addresses"`
 	EndHeight uint64   `json:"EndHeight"`
 }
 
-type CheckBalanceRsp struct {
+type GetRewardsRsp struct {
 	Action string `json:"action"`
 	Desc   string `json:"desc"`
 	Error  int    `json:"error"`
@@ -238,26 +310,48 @@ type CheckBalanceRsp struct {
 	} `json:"result"`
 }
 
-func (a *CheckBalance) CheckBalances(ctx *Context, addresses []common.Address) (balances []*big.Int, err error) {
-	addressArr := make([]string, 0)
-	for _, address := range addresses {
-		addressArr = append(addressArr, address.String())
+type GetGasFeeReq struct {
+	Id        string   `json:"Id"`
+	Addresses []string `json:"Addresses"`
+	EndHeight uint64   `json:"EndHeight"`
+}
+
+type GetGasFeeRsp struct {
+	Action string `json:"action"`
+	Desc   string `json:"desc"`
+	Error  int    `json:"error"`
+	Result struct {
+		Amount []string `json:"Amount"`
+		Id     string   `json:"Id"`
+	} `json:"result"`
+}
+
+func (a *CheckBalance) getExpectedRewards(ctx *Context, address common.Address, height uint64) (*big.Int, error) {
+	getRewardsReq := &GetRewardsReq{Addresses: []string{address.String()}, EndHeight: height}
+	getRewardsRsp := &GetRewardsRsp{}
+	err := PostJsonFor(ctx.getRewardsUrl, getRewardsReq, getRewardsRsp)
+	if err != nil || len(getRewardsRsp.Result.Amount) == 0 {
+		return nil, fmt.Errorf("getExpectedRewards post failed, err: %v", err)
 	}
-	req := &CheckBalanceReq{Addresses: addressArr, EndHeight: a.StartAt()}
-	rsp := &CheckBalanceRsp{}
-	err = PostJsonFor(ctx.checkUrl, req, rsp)
-	if err != nil {
-		return
+	expectedRewards, ok := new(big.Int).SetString(getRewardsRsp.Result.Amount[0], 10)
+	if !ok {
+		return nil, fmt.Errorf("getExpectedRewards convert %s to big.Int failed", getRewardsRsp.Result.Amount[0])
 	}
-	for _, amount := range rsp.Result.Amount {
-		balance, ok := new(big.Int).SetString(amount, 10)
-		if !ok {
-			err = fmt.Errorf("checkbalance convert balance from %s failed", amount)
-			return
-		}
-		balances = append(balances, balance)
+	return expectedRewards, nil
+}
+
+func (a *CheckBalance) getGasFee(ctx *Context, address common.Address, height uint64) (*big.Int, error) {
+	getGasFeeReq := &GetGasFeeReq{Addresses: []string{address.String()}, EndHeight: height}
+	getGasFeeRsp := &GetGasFeeRsp{}
+	err := PostJsonFor(ctx.getGasFeeUrl, getGasFeeReq, getGasFeeRsp)
+	if err != nil || len(getGasFeeRsp.Result.Amount) == 0 {
+		return nil, fmt.Errorf("getGasFees post failed, err: %v", err)
 	}
-	return
+	gasFee, ok := new(big.Int).SetString(getGasFeeRsp.Result.Amount[0], 10)
+	if !ok {
+		return nil, fmt.Errorf("getExpectedRewards convert %s to big.Int failed", getGasFeeRsp.Result.Amount[0])
+	}
+	return gasFee, nil
 }
 
 func PostJsonFor(url string, payload interface{}, result interface{}) error {
