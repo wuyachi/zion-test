@@ -78,7 +78,11 @@ func ParseExcel(excelPath string) (rawCases []*RawCase, err error) {
 	for i := 1; i <= excel.SheetCount; i++ {
 		var fieldsIndex map[string]int
 		caseRows := make([][]string, 0)
-		rows := excel.GetRows(excel.GetSheetName(i))
+		sheetName := excel.GetSheetName(i)
+		if !strings.HasPrefix(sheetName, "case") {
+			continue
+		}
+		rows := excel.GetRows(sheetName)
 		for j, row := range rows {
 			if j == 0 {
 				fieldsIndex = getFieldsIndex(row)
