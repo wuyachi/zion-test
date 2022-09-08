@@ -60,6 +60,8 @@ func NewParseHandler(rawAction *RawAction) (ParseHandler, error) {
 		return &GetCurrentEpochInfoParser{rawAction: rawAction}, nil
 	case base.MethodGetAllValidators:
 		return &GetAllValidatorsParser{rawAction: rawAction}, nil
+	case base.MethodGetValidator:
+		return &GetValidatorParser{rawAction: rawAction}, nil
 	case base.MethodGetStakeInfo:
 		return &GetStakeInfoParser{rawAction: rawAction}, nil
 	case base.MethodGetStakeStartingInfo:
