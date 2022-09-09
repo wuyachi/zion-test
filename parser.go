@@ -115,11 +115,11 @@ func createRawCase(rows [][]string, fieldsIndex map[string]int) (rawCase *RawCas
 	rawCase = &RawCase{Actions: []*RawAction{}}
 	for i, row := range rows {
 		if i == 0 {
-			rawCase.Index, err = strconv.ParseInt(row[fieldsIndex[_CaseNo]], 10, 64)
+			caseNo, err := strconv.ParseFloat(row[fieldsIndex[_CaseNo]], 64)
 			if err != nil {
-				err = fmt.Errorf("invalid caseNo: %s", row[fieldsIndex[_CaseNo]])
-				return
+				return nil, fmt.Errorf("invalid caseNo: %s", row[fieldsIndex[_CaseNo]])
 			}
+			rawCase.Index = int64(caseNo)
 		}
 
 		err = formatRow(row, fieldsIndex)
