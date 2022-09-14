@@ -45,7 +45,7 @@ func (g *GetValidatorParser) ParseAssertion(input string) error {
 	}
 
 	switch field {
-	case "TotalStake":
+	case "TotalStake", "SelfStake":
 		assertion := Assertion{}
 		assertion.AssertType = assertType
 		assertion.MethodName = base.MethodGetValidator
