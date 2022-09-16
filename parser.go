@@ -80,6 +80,8 @@ func NewParseHandler(rawAction *RawAction) (ParseHandler, error) {
 		return &GetProposalListParser{rawAction: rawAction}, nil
 	case base.MethodGetConfigProposalList:
 		return &GetConfigProposalListParser{rawAction: rawAction}, nil
+	case base.MethodGetCommunityProposalList:
+		return &GetCommunityProposalListParser{rawAction: rawAction}, nil
 	default:
 		err := fmt.Errorf("undefined method: %s", rawAction.MethodName)
 		return nil, err
