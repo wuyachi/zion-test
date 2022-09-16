@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/rlp"
+	"main/proposal_manager"
 
 	"main/base"
 	"main/node_manager"
@@ -166,6 +167,14 @@ func getMethodResult(methodName string) (interface{}, error) {
 		return &node_manager.ValidatorSnapshotRewards{}, nil
 	case base.MethodGetStakeRewards:
 		return &node_manager.ValidatorOutstandingRewards{}, nil
+	case base.MethodGetProposal:
+		return &proposal_manager.Proposal{}, nil
+	case base.MethodGetProposalList:
+		return &proposal_manager.ProposalList{}, nil
+	case base.MethodGetConfigProposalList:
+		return &proposal_manager.ConfigProposalList{}, nil
+	case base.MethodGetCommunityProposalList:
+		return &proposal_manager.CommunityProposalList{}, nil
 
 	default:
 		err := fmt.Errorf("getMethodResult undefined method: %s", methodName)
