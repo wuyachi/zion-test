@@ -74,6 +74,8 @@ func NewParseHandler(rawAction *RawAction) (ParseHandler, error) {
 		return &ProposeCommunityParser{rawAction: rawAction}, nil
 	case base.MethodVoteProposal:
 		return &VoteProposalParser{rawAction: rawAction}, nil
+	case base.MethodGetProposal:
+		return &GetProposalParser{rawAction: rawAction}, nil
 	default:
 		err := fmt.Errorf("undefined method: %s", rawAction.MethodName)
 		return nil, err
