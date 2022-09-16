@@ -70,6 +70,8 @@ func NewParseHandler(rawAction *RawAction) (ParseHandler, error) {
 		return &ProposeParser{rawAction: rawAction}, nil
 	case base.MethodProposeConfig:
 		return &ProposeConfigParser{rawAction: rawAction}, nil
+	case base.MethodProposeCommunity:
+		return &ProposeCommunityParser{rawAction: rawAction}, nil
 
 	default:
 		err := fmt.Errorf("undefined method: %s", rawAction.MethodName)
