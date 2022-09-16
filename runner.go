@@ -36,17 +36,17 @@ func dumpResult(cases []*Case) (err error) {
 	if err != nil {
 		log.Fatal("dump result open excel file failed", "err", err)
 	}
-	for i, c := range cases {
+	for _, c := range cases {
 		if c.err == nil {
-			excel.SetCellValue(fmt.Sprintf("case%d", c.index), "M"+strconv.Itoa(i+2), "success")
+			excel.SetCellValue(fmt.Sprintf("case%d", c.index), "M"+strconv.Itoa(2), "success")
 		} else {
-			excel.SetCellValue(fmt.Sprintf("case%d", c.index), "M"+strconv.Itoa(i+2), c.err)
+			excel.SetCellValue(fmt.Sprintf("case%d", c.index), "M"+strconv.Itoa(2), c.err)
 		}
-		for j, action := range c.actions {
+		for i, action := range c.actions {
 			if action.Error() != nil {
-				excel.SetCellValue(fmt.Sprintf("case%d", c.index), "L"+strconv.Itoa(j+2), action.Error())
+				excel.SetCellValue(fmt.Sprintf("case%d", c.index), "L"+strconv.Itoa(i+2), action.Error())
 			} else {
-				excel.SetCellValue(fmt.Sprintf("case%d", c.index), "L"+strconv.Itoa(j+2), action.Note())
+				excel.SetCellValue(fmt.Sprintf("case%d", c.index), "L"+strconv.Itoa(i+2), action.Note())
 			}
 		}
 	}

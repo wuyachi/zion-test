@@ -60,6 +60,8 @@ func NewParseHandler(rawAction *RawAction) (ParseHandler, error) {
 		return &GetCurrentEpochInfoParser{rawAction: rawAction}, nil
 	case base.MethodGetAllValidators:
 		return &GetAllValidatorsParser{rawAction: rawAction}, nil
+	case base.MethodGetValidator:
+		return &GetValidatorParser{rawAction: rawAction}, nil
 	case base.MethodGetStakeInfo:
 		return &GetStakeInfoParser{rawAction: rawAction}, nil
 	case base.MethodGetStakeStartingInfo:
@@ -78,7 +80,11 @@ func ParseExcel(excelPath string) (rawCases []*RawCase, err error) {
 	for i := 1; i <= excel.SheetCount; i++ {
 		var fieldsIndex map[string]int
 		caseRows := make([][]string, 0)
-		rows := excel.GetRows(excel.GetSheetName(i))
+		sheetName := excel.GetSheetName(i)
+		if !strings.HasPrefix(sheetName, "case") {
+			continue
+		}
+		rows := excel.GetRows(sheetName)
 		for j, row := range rows {
 			if j == 0 {
 				fieldsIndex = getFieldsIndex(row)
@@ -109,11 +115,11 @@ func createRawCase(rows [][]string, fieldsIndex map[string]int) (rawCase *RawCas
 	rawCase = &RawCase{Actions: []*RawAction{}}
 	for i, row := range rows {
 		if i == 0 {
-			rawCase.Index, err = strconv.ParseInt(row[fieldsIndex[_CaseNo]], 10, 64)
+			caseNo, err := strconv.ParseFloat(row[fieldsIndex[_CaseNo]], 64)
 			if err != nil {
-				err = fmt.Errorf("invalid caseNo: %s", row[fieldsIndex[_CaseNo]])
-				return
+				return nil, fmt.Errorf("invalid caseNo: %s", row[fieldsIndex[_CaseNo]])
 			}
+			rawCase.Index = int64(caseNo)
 		}
 
 		err = formatRow(row, fieldsIndex)
