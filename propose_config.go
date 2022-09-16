@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/ethereum/go-ethereum/rlp"
+	"main/base"
 	"main/node_manager"
 	"main/proposal_manager"
 	"math/big"
@@ -32,11 +33,13 @@ func (c *ProposeConfigParser) ParseInput(input string) error {
 	if !ok {
 		return fmt.Errorf("invalid minInitialStake: %s", parts[1])
 	}
+	minInitialStake = new(big.Int).Mul(minInitialStake, base.ZionPrecision)
 
 	minProposalStake, ok := new(big.Int).SetString(parts[2], 10)
 	if !ok {
 		return fmt.Errorf("invalid minProposalStake: %s", parts[2])
 	}
+	minProposalStake = new(big.Int).Mul(minProposalStake, base.ZionPrecision)
 
 	blockPerEpoch, ok := new(big.Int).SetString(parts[3], 10)
 	if !ok {
