@@ -66,6 +66,11 @@ func NewParseHandler(rawAction *RawAction) (ParseHandler, error) {
 		return &GetStakeInfoParser{rawAction: rawAction}, nil
 	case base.MethodGetStakeStartingInfo:
 		return &GetStakeStartingInfoParser{rawAction: rawAction}, nil
+	case base.MethodPropose:
+		return &ProposeParser{rawAction: rawAction}, nil
+	case base.MethodProposeConfig:
+		return &ProposeConfigParser{rawAction: rawAction}, nil
+
 	default:
 		err := fmt.Errorf("undefined method: %s", rawAction.MethodName)
 		return nil, err
