@@ -20,11 +20,12 @@ func (c *VoteProposalParser) ParseInput(input string) error {
 		return fmt.Errorf("invalid format input[%s]", input)
 	}
 
-	id, ok := new(big.Int).SetString(parts[0], 10)
+	id, ok := new(big.Float).SetString(parts[0])
 	if !ok {
 		return fmt.Errorf("invalid id: %s", parts[0])
 	}
-	param.ID = id
+	idUint, _ := id.Uint64()
+	param.ID = new(big.Int).SetUint64(idUint)
 
 	return nil
 }
