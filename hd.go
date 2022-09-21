@@ -85,18 +85,14 @@ func dump(ctx *cli.Context) (err error) {
 	var validators []map[string]string
 	var seeds, addresses []string
 	unit := new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil)
-	allocPerUser := new(big.Int).Mul(big.NewInt(100000), unit)
+	allocPerUser := new(big.Int).Mul(big.NewInt(300000), unit)
 	allocPerStaker := new(big.Int).Mul(big.NewInt(2000000), unit)
-	left := new(big.Int).Mul(big.NewInt(100000000-100000*99-2000000*13), unit)
+	left := new(big.Int).Mul(big.NewInt(100000000-300000*100-2000000*12), unit)
 
 	var privs, pubs []string
 
 	for i := 0; i < 100; i++ {
 		w := &HDAddress{0, uint32(i + 1)}
-		if i == 28 {
-			alloc[w.ToAddress().Hex()] = map[string]string{"balance": allocPerStaker.String()}
-			continue
-		}
 		alloc[w.ToAddress().Hex()] = map[string]string{"balance": allocPerUser.String()}
 	}
 	for i := 0; i < 12; i++ {
@@ -108,7 +104,7 @@ func dump(ctx *cli.Context) (err error) {
 		pubs = append(pubs, fmt.Sprintf("%#x", crypto.CompressPubkey(&w.PrivateKey().PublicKey)))
 		addresses = append(addresses, address)
 
-		if i < 4 {
+		if i > 7 {
 			seeds = append(seeds, fmt.Sprintf("enode://%s@127.0.0.1:%v?discport=0", PubkeyID(&w.PrivateKey().PublicKey), 1000))
 			w.Index_2 = 2
 			validators = append(validators, map[string]string{
