@@ -87,9 +87,7 @@ func dump(ctx *cli.Context) (err error) {
 	unit := new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil)
 	allocPerUser := new(big.Int).Mul(big.NewInt(300000), unit)
 	allocPerStaker := new(big.Int).Mul(big.NewInt(2000000), unit)
-	allocPerValidator := new(big.Int).Mul(big.NewInt(300000), unit)
-	allocPerProposal := new(big.Int).Mul(big.NewInt(50000), unit)
-	left := new(big.Int).Mul(big.NewInt(100000000-300000*100-300000*12-50000*12-2000000*12), unit)
+	left := new(big.Int).Mul(big.NewInt(100000000-300000*100-2000000*12), unit)
 
 	var privs, pubs []string
 
@@ -98,12 +96,6 @@ func dump(ctx *cli.Context) (err error) {
 		alloc[w.ToAddress().Hex()] = map[string]string{"balance": allocPerUser.String()}
 	}
 	for i := 0; i < 12; i++ {
-		v := &HDAddress{uint32(i + 1), 1}
-		alloc[v.ToAddress().Hex()] = map[string]string{"balance": allocPerValidator.String()}
-
-		p := &HDAddress{uint32(i + 1), 3}
-		alloc[p.ToAddress().Hex()] = map[string]string{"balance": allocPerProposal.String()}
-
 		w := &HDAddress{uint32(i + 1), 4}
 		alloc[w.ToAddress().Hex()] = map[string]string{"balance": allocPerStaker.String()}
 		w.Index_2 = 1
