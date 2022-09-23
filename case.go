@@ -285,6 +285,7 @@ func (a *CheckBalance) Run(ctx *Context) (note string, err error) {
 		if err != nil {
 			log.Error("getAccumulatedCommission", "err", err)
 		}
+		fmt.Printf("account=%s CommissionValidator=%s commission=%s\n", a.Address.String(), a.CommissionValidator, commission)
 	}
 
 	arrivedRewards := new(big.Int).Sub(balance, initialBalance)
@@ -293,14 +294,15 @@ func (a *CheckBalance) Run(ctx *Context) (note string, err error) {
 	fmt.Printf("account=%s arrivedRewards=%s\n", a.Address.String(), arrivedRewards)
 
 	allRewards := new(big.Int).Add(unArrivedRewards, arrivedRewards)
-	allRewards = new(big.Int).Add(allRewards, commission)
-
+	if commission != nil {
+		allRewards = new(big.Int).Add(allRewards, commission)
+	}
 	fmt.Printf("account=%s allRewards=%s\n", a.Address.String(), allRewards)
 
 	maxDelta := new(big.Int).Mul(new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil), big.NewInt(1))
 
 	delta := new(big.Int).Abs(new(big.Int).Sub(allRewards, expectedRewards))
-	note = fmt.Sprintf("delta %s", delta.String())
+	note = fmt.Sprintf("balance: %s, delta: %s", balance.String(), delta.String())
 	fmt.Printf("actionIndex=%d account=%s delta=%s\n", a.Index(), a.Address.String(), delta)
 	if delta.Cmp(maxDelta) == 1 {
 		return "", fmt.Errorf("actionIndex=%d account: %s balance check failure, allRewards %s, expectedRewards %s, delta %s", a.Index(), a.Address, allRewards, expectedRewards, delta)
