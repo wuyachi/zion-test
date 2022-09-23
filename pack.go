@@ -45,9 +45,11 @@ type RawAction struct {
 }
 
 type CheckBalancePara struct {
-	Address    common.Address
-	Validators []common.Address
-	NetStake   *big.Int
+	Address             common.Address
+	Validators          []common.Address
+	NetStake            *big.Int
+	CheckCommission     bool
+	CommissionValidator common.Address
 }
 
 func ReadOnly(methodName string) bool {
@@ -100,10 +102,12 @@ func (a *RawAction) Pack(nonce uint64) (Action, error) {
 	switch getMethodType(a.MethodName) {
 	case CHECK_BALANCE:
 		return &CheckBalance{
-			ActionBase: a.ActionBase,
-			Address:    a.CheckBalancePara.Address,
-			Validators: a.CheckBalancePara.Validators,
-			NetStake:   a.CheckBalancePara.NetStake,
+			ActionBase:          a.ActionBase,
+			Address:             a.CheckBalancePara.Address,
+			Validators:          a.CheckBalancePara.Validators,
+			NetStake:            a.CheckBalancePara.NetStake,
+			CheckCommission:     a.CheckBalancePara.CheckCommission,
+			CommissionValidator: a.CheckBalancePara.CommissionValidator,
 		}, nil
 	case QUERY:
 		data, err := a.Input.Encode()

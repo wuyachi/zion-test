@@ -23,6 +23,7 @@ func (c *CheckBalanceParser) ParseInput(input string) error {
 		return err
 	}
 	checkBalancePara.Address = userHdAddress.ToAddress()
+	needCheckCommission := isValidator(parts[0])
 
 	validators := strings.Split(parts[1], ",")
 	if len(validators)%2 != 0 {
@@ -34,6 +35,13 @@ func (c *CheckBalanceParser) ParseInput(input string) error {
 			return err
 		}
 		checkBalancePara.Validators = append(checkBalancePara.Validators, validatorHdAddress.ToAddress())
+
+		if needCheckCommission {
+			if isCommissionValidator(parts[0], validators[i]) {
+				checkBalancePara.CheckCommission = true
+				checkBalancePara.CommissionValidator = validatorHdAddress.ToAddress()
+			}
+		}
 	}
 
 	checkBalancePara.NetStake = big.NewInt(0)
@@ -56,4 +64,20 @@ func (c *CheckBalanceParser) ParseInput(input string) error {
 
 func (c *CheckBalanceParser) ParseAssertion(input string) error {
 	return nil
+}
+
+func isCommissionValidator(input1, input2 string) bool {
+	parts := strings.Split(input1, ",")
+	if parts[0] == input2 {
+		return true
+	}
+	return false
+}
+
+func isValidator(input string) bool {
+	parts := strings.Split(input, ",")
+	if parts[0] != "0" && parts[1] == "4" {
+		return true
+	}
+	return false
 }

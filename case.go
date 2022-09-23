@@ -212,9 +212,11 @@ func (a *Query) Run(ctx *Context) (note string, err error) {
 
 type CheckBalance struct {
 	ActionBase
-	Address    common.Address
-	Validators []common.Address
-	NetStake   *big.Int
+	Address             common.Address
+	Validators          []common.Address
+	NetStake            *big.Int
+	CheckCommission     bool
+	CommissionValidator common.Address
 }
 
 func (a *CheckBalance) Run(ctx *Context) (note string, err error) {
@@ -245,6 +247,7 @@ func (a *CheckBalance) Run(ctx *Context) (note string, err error) {
 	}
 	fmt.Printf("account=%s gasFee=%s\n", a.Address.String(), gasFee)
 
+	// get unArrivedRewards
 	unArrivedRewards := big.NewInt(0)
 	for _, validator := range a.Validators {
 		input := &node_manager.GetStakeRewardsParam{ConsensusAddress: validator, StakeAddress: a.Address}
@@ -275,12 +278,23 @@ func (a *CheckBalance) Run(ctx *Context) (note string, err error) {
 	}
 	fmt.Printf("account=%s unArrivedRewards=%s\n", a.Address.String(), unArrivedRewards)
 
+	// get accumulated commission
+	commission := big.NewInt(0)
+	if a.CheckCommission {
+		commission, err = a.getAccumulatedCommission(ctx, checkHeight)
+		if err != nil {
+			log.Error("getAccumulatedCommission", "err", err)
+		}
+	}
+
 	arrivedRewards := new(big.Int).Sub(balance, initialBalance)
 	arrivedRewards.Add(arrivedRewards, gasFee)
 	arrivedRewards.Sub(arrivedRewards, a.NetStake)
 	fmt.Printf("account=%s arrivedRewards=%s\n", a.Address.String(), arrivedRewards)
 
 	allRewards := new(big.Int).Add(unArrivedRewards, arrivedRewards)
+	allRewards = new(big.Int).Add(allRewards, commission)
+
 	fmt.Printf("account=%s allRewards=%s\n", a.Address.String(), allRewards)
 
 	maxDelta := new(big.Int).Mul(new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil), big.NewInt(1))
@@ -292,6 +306,30 @@ func (a *CheckBalance) Run(ctx *Context) (note string, err error) {
 		return "", fmt.Errorf("actionIndex=%d account: %s balance check failure, allRewards %s, expectedRewards %s, delta %s", a.Index(), a.Address, allRewards, expectedRewards, delta)
 	}
 	return
+}
+
+func (a *CheckBalance) getAccumulatedCommission(ctx *Context, checkHeight uint64) (*big.Int, error) {
+	input := &node_manager.GetAccumulatedCommissionParam{ConsensusAddress: a.CommissionValidator}
+	data, err := input.Encode()
+	if err != nil {
+		return nil, fmt.Errorf("encode failed, err: %v", err)
+	}
+	request := ethereum.CallMsg{To: &NODE_MANAGER_CONTRACT, Data: data}
+	output, err := ctx.nodes.Node().CallContract(context.Background(), request, big.NewInt(int64(checkHeight)))
+	if err != nil {
+		return nil, fmt.Errorf("callContract failed, err: %v", err)
+	}
+	unpacked, err := node_manager.ABI.Unpack(base.MethodGetAccumulatedCommission, output)
+	if err != nil {
+		return nil, fmt.Errorf("fail to unpack output: %v %x", err, output)
+	}
+	result := *abi.ConvertType(unpacked[0], new([]byte)).(*[]byte)
+	accumulatedCommission := &node_manager.AccumulatedCommission{}
+	err = rlp.DecodeBytes(result, accumulatedCommission)
+	if err != nil {
+		return nil, fmt.Errorf("fail to decode return value: %v %x", err, result)
+	}
+	return accumulatedCommission.Amount.BigInt(), nil
 }
 
 type GetRewardsReq struct {
