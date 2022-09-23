@@ -281,10 +281,11 @@ func (a *CheckBalance) Run(ctx *Context) (note string, err error) {
 	// get accumulated commission
 	commission := big.NewInt(0)
 	if a.CheckCommission {
-		commission, err = a.getAccumulatedCommission(ctx, checkHeight)
-		if err != nil {
-			log.Error("getAccumulatedCommission", "err", err)
+		accumulatedCommission, e := a.getAccumulatedCommission(ctx, checkHeight)
+		if e != nil {
+			log.Error("getAccumulatedCommission", "err", e)
 		}
+		commission = accumulatedCommission
 		fmt.Printf("account=%s CommissionValidator=%s commission=%s\n", a.Address.String(), a.CommissionValidator, commission)
 	}
 
