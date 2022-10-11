@@ -38,6 +38,7 @@ func (m *CreateValidatorParam) Encode() ([]byte, error) {
 
 type UpdateValidatorParam struct {
 	ConsensusAddress common.Address
+	SignerAddress    common.Address
 	ProposalAddress  common.Address
 	Desc             string
 }
