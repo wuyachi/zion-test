@@ -163,22 +163,24 @@ type SendTx struct {
 }
 
 func (a *SendTx) Run(ctx *Context) (note string, err error) {
-	err = ctx.nodes.Node().SendTransaction(context.Background(), a.Tx)
+	node := ctx.nodes.Node()
+	err = node.SendTransaction(context.Background(), a.Tx)
 	if err != nil {
+		fmt.Printf("SendTransaction err: %s\n", err)
 		return
 	}
-	currentHeight, _ := ctx.nodes.Node().GetLatestHeight()
-	log.Info("Sent tx", "current_height", currentHeight, "hash", a.Tx.Hash(), "index", a.Index())
+	currentHeight, _ := node.GetLatestHeight()
+	log.Info("Sent tx", "current_height", currentHeight, "hash", a.Tx.Hash().Hex(), "index", a.Index(), "node", node.Address())
 	for i := 0; i < 10; i++ {
 		time.Sleep(time.Second * 2)
-		height, _, pending, err := ctx.nodes.Node().Confirm(a.Tx.Hash(), 1, 10)
+		height, _, pending, err := node.Confirm(a.Tx.Hash(), 1, 10)
 		if err != nil {
 			return "", err
 		}
 
 		if height > 0 {
 			if height <= a.Before() {
-				rec, err := ctx.nodes.Node().TransactionReceipt(context.Background(), a.Tx.Hash())
+				rec, err := node.TransactionReceipt(context.Background(), a.Tx.Hash())
 				if err != nil {
 					return "", err
 				}
@@ -202,8 +204,11 @@ type Query struct {
 }
 
 func (a *Query) Run(ctx *Context) (note string, err error) {
-	output, err := ctx.nodes.Node().CallContract(context.Background(), a.Request, big.NewInt(int64(a.StartAt())))
+	node := ctx.nodes.Node()
+	fmt.Printf("action inedx:%d, node:%s\n", a.index, node.Address())
+	output, err := node.CallContract(context.Background(), a.Request, big.NewInt(int64(a.StartAt())))
 	if err != nil {
+		fmt.Printf("CallContract err: %s\n", err)
 		return
 	}
 	err = Assert(output, a.Assertions)

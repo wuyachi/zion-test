@@ -1,6 +1,7 @@
 package main
 
 import (
+	"main/base"
 	"math/big"
 
 	"github.com/devfans/zion-sdk/contracts/native/utils"
@@ -14,6 +15,7 @@ import (
 var DEFAULT_GAS_PRICE = big.NewInt(1000000000)
 var DEFAULT_GAS_LIMIT uint64 = 10000000
 var NODE_MANAGER_CONTRACT = utils.NodeManagerContractAddress
+var PROPOSAL_MANAGER_CONTRACT = utils.ProposalManagerContractAddress
 var ZION_CHAINID = big.NewInt(60801)
 
 type MethodType int
@@ -98,6 +100,26 @@ func (c *RawCase) Pack() (Case, error) {
 	return res, nil
 }
 
+func getZionContractAddress(method string) common.Address {
+	switch method {
+	case base.MethodCancelValidator, base.MethodChangeEpoch, base.MethodCreateValidator, base.MethodEndBlock,
+		base.MethodStake, base.MethodUnStake, base.MethodUpdateCommission, base.MethodUpdateValidator, base.MethodWithdraw,
+		base.MethodWithdrawCommission, base.MethodWithdrawStakeRewards, base.MethodWithdrawValidator,
+		base.MethodGetAccumulatedCommission, base.MethodGetAllValidators, base.MethodGetCommunityInfo,
+		base.MethodGetCurrentEpochInfo, base.MethodGetEpochInfo, base.MethodGetGlobalConfig, base.MethodGetOutstandingRewards,
+		base.MethodGetStakeInfo, base.MethodGetStakeRewards, base.MethodGetStakeStartingInfo, base.MethodGetTotalPool,
+		base.MethodGetUnlockingInfo, base.MethodGetValidator, base.MethodGetValidatorAccumulatedRewards,
+		base.MethodGetValidatorOutstandingRewards, base.MethodGetValidatorSnapshotRewards:
+		return NODE_MANAGER_CONTRACT
+	case base.MethodPropose, base.MethodProposeCommunity, base.MethodProposeConfig, base.MethodVoteProposal,
+		base.MethodGetCommunityProposalList, base.MethodGetConfigProposalList, base.MethodGetProposal,
+		base.MethodGetProposalList:
+		return PROPOSAL_MANAGER_CONTRACT
+	default:
+		return NODE_MANAGER_CONTRACT
+	}
+}
+
 func (a *RawAction) Pack(nonce uint64) (Action, error) {
 	switch getMethodType(a.MethodName) {
 	case CHECK_BALANCE:
@@ -114,7 +136,8 @@ func (a *RawAction) Pack(nonce uint64) (Action, error) {
 		if err != nil {
 			return nil, err
 		}
-		request := ethereum.CallMsg{To: &NODE_MANAGER_CONTRACT, Data: data}
+		zionContract := getZionContractAddress(a.MethodName)
+		request := ethereum.CallMsg{To: &zionContract, Data: data}
 		return &Query{
 			ActionBase: a.ActionBase,
 			Request:    request,
@@ -127,7 +150,8 @@ func (a *RawAction) Pack(nonce uint64) (Action, error) {
 		}
 		signKey := a.Sender.PrivateKey()
 		log.Info("Packing tx", "sender", a.Sender.ToAddress().Hex(), "index_1", a.Sender.Index_1, "index_2", a.Sender.Index_2)
-		tx := types.NewTransaction(nonce, NODE_MANAGER_CONTRACT, common.Big0, DEFAULT_GAS_LIMIT, DEFAULT_GAS_PRICE, data)
+		zionContract := getZionContractAddress(a.MethodName)
+		tx := types.NewTransaction(nonce, zionContract, common.Big0, DEFAULT_GAS_LIMIT, DEFAULT_GAS_PRICE, data)
 		signer := types.LatestSignerForChainID(ZION_CHAINID)
 		tx, err = types.SignTx(tx, signer, signKey)
 		if err != nil {
@@ -138,6 +162,5 @@ func (a *RawAction) Pack(nonce uint64) (Action, error) {
 			Tx:            tx,
 			ShouldSucceed: a.ShouldSucceed,
 		}, nil
-
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/rlp"
+	"github.com/polynetwork/bridge-common/log"
 	"main/proposal_manager"
 
 	"main/base"
@@ -36,10 +37,12 @@ func Assert(result []byte, assertions []Assertion) error {
 		assertion := assertions[i]
 		s, err := decodeResult(result, assertion.MethodName)
 		if err != nil {
+			fmt.Printf("Assert decodeResult err:%s\n", err)
 			return err
 		}
 		err = assertField(s, assertion.AssertType, assertion.FieldValues)
 		if err != nil {
+			fmt.Printf("Assert assertField err:%s\n", err)
 			return err
 		}
 	}
@@ -116,11 +119,25 @@ func assertField(result reflect.Value, AssertType AssertType, fieldValues []Fiel
 	return nil
 }
 
-func decodeResult(result []byte, methodName string) (reflect.Value, error) {
-	unpacked, err := node_manager.ABI.Unpack(methodName, result)
-	if err != nil {
+func decodeResult(result []byte, methodName string) (res reflect.Value, err error) {
+	var unpacked []interface{}
+	zionContract := getZionContractAddress(methodName)
+	switch zionContract {
+	case NODE_MANAGER_CONTRACT:
+		unpacked, err = node_manager.ABI.Unpack(methodName, result)
+		if err != nil {
+			return reflect.Value{}, err
+		}
+	case PROPOSAL_MANAGER_CONTRACT:
+		unpacked, err = proposal_manager.ABI.Unpack(methodName, result)
+		if err != nil {
+			return reflect.Value{}, err
+		}
+	default:
+		err = fmt.Errorf("undefined method:%s", methodName)
 		return reflect.Value{}, err
 	}
+
 	result = *abi.ConvertType(unpacked[0], new([]byte)).(*[]byte)
 	m, err := getMethodResult(methodName)
 	if err != nil {
@@ -130,6 +147,7 @@ func decodeResult(result []byte, methodName string) (reflect.Value, error) {
 	if err != nil {
 		return reflect.Value{}, fmt.Errorf("fail to decode return value: %v %x", err, result)
 	}
+	log.Info("query", "method", methodName, "result", fmt.Sprintf("%+v", m))
 	return reflect.ValueOf(m).Elem(), nil
 }
 
