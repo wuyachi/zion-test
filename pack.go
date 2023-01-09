@@ -39,6 +39,7 @@ type RawAction struct {
 	Row              []string
 	MethodName       string
 	Input            Param
+	Amount           *big.Int
 	ShouldSucceed    bool
 	Assertions       []Assertion
 	Sender           HDAddress
@@ -151,7 +152,11 @@ func (a *RawAction) Pack(nonce uint64) (Action, error) {
 		signKey := a.Sender.PrivateKey()
 		log.Info("Packing tx", "sender", a.Sender.ToAddress().Hex(), "index_1", a.Sender.Index_1, "index_2", a.Sender.Index_2)
 		zionContract := getZionContractAddress(a.MethodName)
-		tx := types.NewTransaction(nonce, zionContract, common.Big0, DEFAULT_GAS_LIMIT, DEFAULT_GAS_PRICE, data)
+		amount := common.Big0
+		if a.Amount != nil {
+			amount = a.Amount
+		}
+		tx := types.NewTransaction(nonce, zionContract, amount, DEFAULT_GAS_LIMIT, DEFAULT_GAS_PRICE, data)
 		signer := types.LatestSignerForChainID(ZION_CHAINID)
 		tx, err = types.SignTx(tx, signer, signKey)
 		if err != nil {

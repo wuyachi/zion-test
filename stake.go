@@ -32,7 +32,7 @@ func (s *StakeParser) ParseInput(input string) error {
 	if err != nil {
 		return fmt.Errorf("invalid stake amount: %s, err: %v", parts[1], err)
 	}
-	param.Amount = new(big.Int).Mul(big.NewInt(amount), base.ZionPrecision)
+	s.rawAction.Amount = new(big.Int).Mul(big.NewInt(amount), base.ZionPrecision)
 
 	return nil
 }
